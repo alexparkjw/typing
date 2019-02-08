@@ -84,7 +84,7 @@ git add .
 ```
  - 명령어로 현제 디렉토리의 모든 파일을 지목할 수도 있다.
 ```
-  `git commit -m "create README.md"
+git commit -m "create README.md"
 ```
 - 큰따옴표 안에는 작업 내용을 코맨트 하는 것이다. 생략하면 안된다. 이내용을 기반으로 해시 테이블에 넣어서 작업내용을 분류하기 때문이다.
 
