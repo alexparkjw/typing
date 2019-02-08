@@ -42,22 +42,21 @@ echo "# ask" >> README.md
 git init
 git add README.md
 git commit -m "first commit"
-git remote add origin https://github.com/alexparkjw/ask.git
-git push -u origin master
-```
-
-이미 README.md 파일을 만들었다면, 아래처럼 생략할 수 있다.
-
-```
-git remote add origin https://github.com/alexparkjw/ask.git
+git remote add origin https://github.com/alexparkjw/typing.git
 git push -u origin master
 ```
 
 단, 본인의 아이디와, 본인이 정한 리파지토리 이름으로 바꿔줘야한다.
 
-https://github.com/alexparkjw/ask.git 주소를 https://github.com/본인의아이디/리파지토리이름.git  이렇게 말이다.
+https://github.com/alexparkjw/typing.git 주소를 https://github.com/본인의아이디/리파지토리이름.git  이렇게 말이다.
 
 위의 명령어는 본인의 컴퓨터 안에 작업할 디렉토리 안에서 해주면 .git/ 이라는 서브 디렉토리가 생성된다.
+
+
+```
+git rm -f filename
+git checkout filename
+```
 
 
 c. 디렉토리 안에서 작업을 한다: 예를들어 아래처럼 README.md 를 만들고 싶다면
