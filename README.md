@@ -115,7 +115,7 @@ g.나머지는 공식메뉴얼 한글버전 https://git-scm.com/book/ko/v2 각�
 
 
 # 4.GitHub를 활용한 프로젝트 예
-ask/typing/ 디렉토리 안에서, 리눅스 기반의 한컴타자나, 한메타자 같은 프로그램을 GitHub 를 활용하여 프로젝트 해볼까 한다.
+/typing, 리눅스 기반의 한컴타자나, 한메타자 같은 프로그램을 GitHub 를 활용하여 프로젝트 해볼까 한다.
 
 
 #5 https://github.com/alexparkjw/typing.git
