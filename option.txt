@@ -1,0 +1,5 @@
+1. Set repeats:basic 
+2. Set repeats:words
+3. Set repeats:sentence
+4. Set repeats:paragraph
+4. Exit of Option
