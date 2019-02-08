@@ -30,6 +30,7 @@ c. windows 설치 : 아래링크로 가면 자동 다운로드 후 설치
  - http://git-scm.com/download/win 
 
 
+
 # 3. GitHub 간단한 사용예
 
 a. GitHub 에 가입한다: 아이디,패스워드,이메일을 등록하구 , 이메일가서 확인을 하면 가입이 된다.
@@ -52,13 +53,6 @@ https://github.com/alexparkjw/typing.git 주소를 https://github.com/본인의�
 
 위의 명령어는 본인의 컴퓨터 안에 작업할 디렉토리 안에서 해주면 .git/ 이라는 서브 디렉토리가 생성된다.
 
-
-```
-git rm -f filename
-git checkout filename
-```
-
-파일을 지우고, add 파일을 수정할 수 있다. 
 
 
 c. 디렉토리 안에서 작업을 한다: 예를들어 아래처럼 README.md 를 만들고 싶다면
@@ -111,12 +105,64 @@ git clone https://github.com/alexparkjw/typing.git
 
 
 
-g.나머지는 공식메뉴얼 한글버전 https://git-scm.com/book/ko/v2 각자 터득하기 바란다..
+# 4. 기타 명령어 정리
 
 
-# 4.GitHub를 활용한 프로젝트 예
+```
+git status
+```
+- 깃의 상태를 확인한다. 
+
+```
+git add [file]
+```
+- 작업디렉토리의 파일을 스태이에 올려놓는다. 
+
+```
+git checkout --[file]
+```
+- 스태이징의 파일을 작업공간으로 내려놓는다.
+
+```
+git commit -m "MSG"
+```
+- 스태이징 파일들을 로컬 리파지토리에 올려 놓는다. 
+
+```
+git push
+```
+- 로컬 리파지토리 올려진 파일들을 깃허브 리파지토리로 올린다.
+
+```
+git fetch
+```
+- 깃허브 리파지토리의 파일을 로컬 리파지토리에 내려놓는다. 
+
+```
+git merge
+```
+- 로컬 리파지토리의 파일을 작업디렉토리로 가져온다.
+
+```
+git log
+```
+- 깃허브 리파지토리의 로그를 본다.
+
+```
+git reset --hard [hash]
+```
+- 해시 리파지토리의 돌려놓는다.
+
+
+
+
+
+나머지는 공식메뉴얼 한글버전 https://git-scm.com/book/ko/v2 각자 터득하기 바란다..
+
+
+# 5.GitHub를 활용한 프로젝트 예
 /typing, 리눅스 기반의 한컴타자나, 한메타자 같은 프로그램을 GitHub 를 활용하여 프로젝트 해볼까 한다.
 
 
-#5 https://github.com/alexparkjw/typing.git
+#6 https://github.com/alexparkjw/typing.git
 
