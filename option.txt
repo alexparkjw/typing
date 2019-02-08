@@ -2,4 +2,5 @@
 2. Set repeats:words
 3. Set repeats:sentence
 4. Set repeats:paragraph
-4. Exit of Option
+4. Set repeats:game
+5. Exit of Option

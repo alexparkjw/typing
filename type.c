@@ -19,22 +19,24 @@ typedef struct Vector {
     int len;
 }vector;
 
-char * strDup(const char * str);
-int strCmp(void * vp1, void * vp2);
-bool match(char *first, char * second);
+char *strDup(const char *str);
+int strCmp(void *vp1, void *vp2);
+bool match(char *first, char *second);
 
 void print_menu(vector *, int );
 void print_basic(vector * );
-int set_basic(WINDOW *win,  char *temp, int lv );
+int set_basic(WINDOW *,  char *, int );
 int print_words(vector * );
 int print_sentence(vector * );
 int print_graph(vector *, int *);
-void * print_game(void * );
+void *print_game(void * );
 void *rain(void *);
 void option_menu(vector *, int **);
 int set_option(vector *); 
-int cline(FILE *fp);
-vector * fileToData(char *filename, vector *v, int, int );
+int cline(FILE *);
+vector * fileToData(char *, vector *, int, int );
+void load_option(char *filename, int **op);
+void save_option(char *filename, int **op);
 
 
 int main(void) { 
@@ -50,11 +52,13 @@ int main(void) {
     sentence = fileToData("short.txt", sentence, 6, 1);
     paragraph = fileToData("paragraph.txt", paragraph, 2, 1); 
     option = fileToData("option.txt", option, 4, 4);
-    int *op[]= { &basic->o, &words->o, &sentence->o, &paragraph->o };
+
+    int *op[]= { &basic->o, &words->o, &sentence->o, &paragraph->o , &game->o};
+    load_option("option.conf", op);
 
     // WINDOW 
     clear();
-    /* cbreak(); */
+    cbreak();
     noecho();
     keypad(menu->win, TRUE);
 
@@ -130,6 +134,7 @@ int main(void) {
                     werase(menu->win);
                     wrefresh(menu->win);
                     option_menu(option, op); 
+                    save_option("option.conf", op);
                     werase(option->win);
                     wrefresh(option->win);
                 }
@@ -640,7 +645,7 @@ void option_menu(vector *option, int **num) {
                     ++highlight;
                 break;
             case '\n':
-                if( highlight >= 1 && highlight < 5) {
+                if( highlight >= 1 && highlight < 6) {
                     werase(option->win);
                     wrefresh(option->win);
                     *num[highlight-1] = set_option(option); 
@@ -744,10 +749,34 @@ vector * fileToData(char *filename, vector *v, int h, int w) {
     v->y = (HEIGHT - v->h)/2;
     v->x = (WIDTH - v->w)/2;
     v->win = newwin(v->h, v->w, v->y, v->x);
-    v->o = 10;
 
     fclose(fp);
     return v;
 }
 
+void load_option(char *filename, int **op) {
+    FILE *fp=fopen(filename, "r");
+    if(fp == NULL) {
+        printf("%s file cannot open \n", filename);
+        return ;
+    }
+    for(int i=0; i<5; i++ )
+        fscanf(fp, " %d", op[i]);
+
+    fclose(fp);
+}
+
+void save_option(char *filename, int **op) {
+    FILE *fp=fopen(filename, "w+");
+    if(fp == NULL) {
+        printf("%s file cannot open \n", filename);
+        return ;
+    }
+    for(int i=0; i<5; i++ )
+        fprintf(fp, "%d\n", *op[i]);
+
+    fclose(fp);
+}
+
+// test
 // test
