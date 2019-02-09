@@ -29,8 +29,9 @@ int set_basic(WINDOW *,  char *, int );
 int print_words(vector * );
 int print_sentence(vector * );
 int print_graph(vector *, int *);
-void *print_game(void * );
+int print_game(vector *);
 void *rain(void *);
+void *type(void *);
 void option_menu(vector *, int **);
 int set_option(vector *); 
 int cline(FILE *);
@@ -127,6 +128,7 @@ int main(void) {
                         if(print_game(game))
                             break;
                     }
+                    cbreak();
                     werase(game->win);
                     wrefresh(game->win);
                 }
@@ -498,18 +500,12 @@ int print_graph(vector *paragraph, int *l ) {
     return 0;
 }
 
-void *print_game(void * v ) {
-    sem_wait(&mutex);
-    vector *game = (vector *)v;
-    char temp[150];
-    int num=3, ch, ii=0, y=30, x=30;
-
-    curs_set(TRUE); 
+int print_game(vector *game ) {
     box(game->win, 0, 0);
     wrefresh(game->win);
-    keypad(game->win, TRUE);
-
-    vector **s=(vector**)malloc(sizeof(vector*)*3);
+    
+    int num = 3;
+    vector **s=(vector**)malloc(sizeof(vector*)*num);
     for(int i=0; i<num; i++) {
         s[i]=(vector*)malloc(sizeof(vector));
         s[i]->data=(char**)malloc(sizeof(char*)*1);
@@ -520,100 +516,84 @@ void *print_game(void * v ) {
         s[i]->win = newwin(s[i]->h, s[i]->w, s[i]->y, s[i]->x );    
     }
 
-    sem_open((char *)&mutex, 0, 1);
-    pthread_t tids[num];
-    for(int i=0; i<num; i++) {
-        pthread_attr_t attr;
-        pthread_attr_init(&attr);
-        pthread_create(&tids[i], &attr, rain, s[i]);
-        usleep(5000);
-        wrefresh(s[i]->win);
-    }
-    sleep(1);
-    for(int i=0; i<num; i++) { 
-        pthread_join(tids[i], NULL); 
-    }
-    sem_unlink((char*)&mutex);
-    
-    int clear[] = {1, 1, 1};
-    while(clear[0]+clear[1]+clear[2]) {
-        for(int r=strlen(temp); r>=0; r--)
-            mvwprintw(game->win, y, --x, " \b");
-        ii=0;
-        x=30;
-        y=28;
-        mvwprintw(game->win, y, x, "");
-        wrefresh(game->win);
-        while( (ch=wgetch(game->win)) != '\n' ) {
-            switch (ch) 
-            {
-                case 27:
-                    werase(game->win);
-                    wrefresh(game->win);
-                    for(int i=0; i<num; i++) {
-                        werase(s[i]->win);
-                        wrefresh(s[i]->win);
-                    }
-                    pthread_exit(0);
-                    break;
-                case 127: case KEY_BACKSPACE:
-                    mvwprintw(game->win, y, --x, " \b");
-                    ii--;
-                    break;
-                default:
-                    temp[ii]=ch;
-                    mvwprintw(game->win, y, x++, "%c", temp[ii]);
-                    ii++;
+    sem_open((char*)&mutex, 0, 4);
+    pthread_t tids[num+1];
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    int sum[3]={}, r;
+    for(int j=0; sum[0]+sum[1]+sum[2]!=120 ; j++) {
+        for(int i=0; i<num; i++) {
+            if(j != 0 && s[i]->y <= 40) {
+                werase(s[i]->win);
+                wrefresh(s[i]->win);
+
+                if(sum[i] < 40) r = rand()%3+1;
+                else r = 0;
+
+                s[i]->y += r;
+                s[i]->win=newwin(s[i]->h, s[i]->w, s[i]->y, s[i]->x);
+                sum[i]=s[i]->y;
+                if(s[i]->y > 40) 
+                    s[i]->y = 40; 
             }
-            if(ii<0) ii=0;
-            if(x<30) x=30;
+            if(sum[i] > 40) {
+                sum[i] = 40;
+            }
+            pthread_create(&tids[i], &attr, rain, s[i]);
+            usleep(500);
+            pthread_create(&tids[4], &attr, type, game);
+            usleep(500);
         }
-        temp[ii]='\0';
-
-        sem_open((char*)&mutex, 0, 1);
-        pthread_t tids[num];
-
-        for(int i=0; i<3; i++) {
-             s[i]->y++;
-            if(strcmp(temp, s[i]->data[0]) == 0) {
-                werase(s[i]->win);
-                wrefresh(s[i]->win);
-                clear[i]--;
-                if(clear[i] >0)
-                    clear[i] = 0;
-            }
-            else if(clear[i] !=0) { 
-                werase(s[i]->win);
-                wrefresh(s[i]->win);
-                s[i]->win = newwin(s[i]->h, s[i]->w, s[i]->y, s[i]->x);
-                //pthread_create(&tids[i], NULL, foo, &s[i]);
-                pthread_attr_t attr;
-                pthread_attr_init(&attr);
-                pthread_create(&tids[i], &attr, rain, s[i]);
-                usleep(5000);
-                wrefresh(s[i]->win);
-            }
-        } 
         sleep(1);
-        for(int i=0; i<num; i++) { 
-            pthread_join(tids[i], NULL); 
-        }
-        sem_unlink((char*)&mutex);
-
     }
+    
+    for(int i=0; i<num; i++) 
+        pthread_join(tids[i], NULL);
+    /* pthread_join(tids[4], NULL); */
+    sem_unlink((char*)&mutex);
+    return 0;
+}
 
-    //while((ch=wgetch(game->win)) != '\n') { ; }   
+void *type(void *v) {
+    sem_wait(&mutex);
+    vector *game = (vector *)v;
+    box(game->win, 0, 0);
+    char temp[150];
+    int  ch, ii=0, y=30, x=30;
+    while( (ch=wgetch(game->win)) != '\n' ) {
+        switch (ch) 
+        {
+            case 27:
+                werase(game->win);
+                wrefresh(game->win);
+                pthread_exit(0);
+                break;
+            case 127: case KEY_BACKSPACE:
+                mvwprintw(game->win, y, --x, " \b");
+                ii--;
+                break;
+            default:
+                temp[ii]=ch;
+                mvwprintw(game->win, y, x++, "%c", temp[ii]);
+                ii++;
+        }
+        if(ii<0) ii=0;
+        if(x<30) x=30;
+    }
+    temp[ii]='\0';
+
     werase(game->win);
     wrefresh(game->win);
     sem_post(&mutex);
     pthread_exit(0);
 }
 
-void * rain(void *v) {
+void *rain(void *v) {
     sem_wait(&mutex);
     vector *s = (vector *)v;
     box(s->win, 0, 0);
-    mvwprintw(s->win, 1, 1, "%s", s->data[0]);
+    mvwprintw(s->win, 1, 1, "%s", s->data[rand()%20]);
+    werase(s->win);
     wrefresh(s->win);
     sem_post(&mutex);
     pthread_exit(0);
@@ -666,7 +646,7 @@ void option_menu(vector *option, int **num) {
                 break;
         }
     }
-    
+
 }
 
 int set_option(vector *option) {
@@ -778,5 +758,3 @@ void save_option(char *filename, int **op) {
     fclose(fp);
 }
 
-// test
-// test

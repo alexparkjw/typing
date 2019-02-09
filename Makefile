@@ -10,7 +10,7 @@ CFLAGS = -Wall -g -std=c99 -Werror -lpthread -lncurses
 all: clean $(TARGETS)
 
 $(TARGETS):
-	$(CC_C) $(CFLAGS) $@.c -o $@
+	$(CC_CLANG) $(CFLAGS) $@.c -o $@
 
 clean:
 	rm -f $(TARGETS)
