@@ -163,6 +163,9 @@ git branch
 
 
 # 5.GitHub를 활용한 프로젝트 예
-https://github.com/alexparkjw/typing.git
-리눅스,맥 기반의 한메타자 같은 프로그램을 GitHub 를 활용하여 프로젝트 해볼까 한다.
+
+```
+git clone https://github.com/alexparkjw/typing.git
+```
+리눅스,맥 기반읜 한메타자 같은 프로그램을 GitHub 를 활용하여 프로젝트 해볼까 한다.
 
