@@ -540,9 +540,9 @@ int print_game(vector *game ) {
                 sum[i] = 40;
             }
             pthread_create(&tids[i], &attr, rain, s[i]);
-            usleep(500);
+            sleep(1);
             pthread_create(&tids[4], &attr, type, game);
-            usleep(500);
+            sleep(1);
         }
         sleep(1);
     }
