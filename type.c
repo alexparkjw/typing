@@ -1,4 +1,4 @@
-/* #include<stdio.h> */
+#include<stdio.h>
 #include<stdlib.h> 
 #include<string.h>
 #include<time.h>
@@ -171,7 +171,7 @@ bool match(char *first, char * second)  {
 
 void print_menu(vector *menu, int highlight ) {
     int y=2, x=2;
-    box(menu->win, 0, 0);
+    box(menu->win, (int)0, (int)0);
     for(int i = 0; i<menu->len; i++, y++) {
         if(highlight == i + 1) {
             wattron(menu->win, A_REVERSE);
@@ -289,8 +289,10 @@ int set_basic(WINDOW *win, char *temp, int lv ) {
                 mvwprintw(win, y, x++, "%c", temp[i]);
                 if(ra[i] == temp[i])
                     mvwprintw(win, y-2, x-1, " ");
-                else
+                else{
                     mvwprintw(win, y-2, x-1, "v");
+                    beep();
+                }
                 i++;
         }
         if(i<0) i=0;
@@ -350,8 +352,10 @@ int print_words(vector * words ) {
                 mvwprintw(words->win, y, x++, "%c", temp[i]);
                 if(mix[i] == temp[i])
                     mvwprintw(words->win, y-2, x-1, " ");
-                else
+                else {
                     mvwprintw(words->win, y-2, x-1, "v");
+                    beep();
+                }
                 i++;
         }
         if(i<0) i=0;
@@ -407,8 +411,10 @@ int print_sentence(vector *sentence ) {
                 mvwprintw(sentence->win, y, x++, "%c", temp[i]);
                 if(mix[i] == temp[i])
                     mvwprintw(sentence->win, y-2, x-1, " ");
-                else
+                else{
                     mvwprintw(sentence->win, y-2, x-1, "v");
+                    beep();
+                }
                 i++;
         }
         if(i<0) i=0;
@@ -470,8 +476,10 @@ int print_graph(vector *paragraph, int *l ) {
                     mvwprintw(paragraph->win, 4*j+y, x++, "%c", temp[j][i]);
                     if(paragraph->data[*l+j][i] == temp[j][i])
                         mvwprintw(paragraph->win, 4*j+y-2, x-1, " ");
-                    else
+                    else{
                         mvwprintw(paragraph->win, 4*j+y-2, x-1, "v");
+                        beep();
+                    }
                     i++;
             }
             if(i<0) i=0;
