@@ -6,17 +6,17 @@
 #include<time.h>
 
 typedef struct Deck{
-    wchar_t suit;
     int num;
     struct Deck *next;
 }deck;
 
-deck* new_deck(deck* card, wchar_t suit, int num);
-deck* add_deck(deck* card, wchar_t suit, int num);
-deck* del_deck(deck* card, wchar_t suit, int num);
-void del_body(deck* prev, deck* curr, wchar_t suit, int num);
+deck* new_deck(deck* card, int num);
+deck* add_deck(deck* card, int num);
+deck* del_deck(deck* card, int num);
+void del_body(deck* prev, deck* curr, int num);
 int sp(int size);
 void print_deck(deck *card); 
+void print_array(int *arr, int len);
 deck* index_deck(deck* card, int n);
 void swap(void *vp1, void *vp2, int size);
 void merge(deck *card, int low, int high, int dir);
@@ -27,11 +27,31 @@ int strCmp(void * vp1, void * vp2);
 void set_trump(deck **card);
 void shuffle(deck **card, int ea);
 
+void combi(deck* a, int *d, int ss,int ee,int index,int r) {
+    if (index == r) {
+        print_array(d, r);
+        return;
+    }
+    for (int i=ss; i<=ee && ee-i+1 >= r-index; i++) {
+        deck *t = index_deck(a, i);
+        d[index] = t->num;
+        combi(a, d, i+1, ee, index+1, r);
+    }
+}
+
+int is_paire(deck *p) {
+    int arr[7];
+    deck *curr = p;
+    for(int i=0; i<7; i++) {
+        arr[i] = curr->num;
+        curr = curr->next;
+    }    
+
+}
 int main(void) { 
     srand(time(NULL));
     char *locale = setlocale(LC_ALL, "");
     deck *card = NULL;
-
     set_trump(&card);
     shuffle(&card, 1000);    
     /* print_deck(card); */
@@ -42,21 +62,33 @@ int main(void) {
     deck *curr = card;
     for(int i=0; i<players; i++) {
         player[i] = (deck *)malloc(sizeof(deck));
+        player[i] = NULL;
         for(int j=0; j<2; j++) {
             curr = curr->next;
-            player[i] = add_deck(player[i], curr->suit, curr->num);
+            player[i] = add_deck(player[i], curr->num);
         }
     }
-    for(int i=0; i<3; i++) {
+    for(int i=0; i<5; i++) {
         curr = curr->next;
-        flop = add_deck(flop, curr->suit, curr->num);
+        flop = add_deck(flop, curr->num);
     }
 
-    printf(" list : \n");
+    printf(" List : \n");
     for(int i=0; i<players; i++) 
         print_deck(player[i]); 
+    printf(" FLop : \n");
     print_deck(flop);
-        
+
+
+
+    //
+    for(int i=0; i<players; i++)
+        player[i]->next->next = flop;
+
+
+    /* int *d=(int*)malloc(sizeof(int)*5); */        
+    /* combi(flop, d, 0, 4, 0, 3); */
+
 
     for(int i=0; i<players; i++)
         free(player[i]);
@@ -64,39 +96,38 @@ int main(void) {
     return 0; 
 }
 
-deck* new_deck(deck *card, wchar_t suit, int num) {
+deck* new_deck(deck *card, int num) {
     deck *new = (deck*)malloc(sizeof(deck));
     new->num = num;
-    new->suit = suit;
     new->next = NULL;
     return new;
 }
 
-deck* add_deck(deck *card, wchar_t suit, int num) {
-    if(card == NULL) card = new_deck(card, suit, num);
-    else card->next = add_deck(card->next, suit, num);
+deck* add_deck(deck *card, int num) {
+    if(card == NULL) card = new_deck(card, num);
+    else card->next = add_deck(card->next, num);
     return card;
 }
 
-deck* del_deck(deck* card, wchar_t suit, int num) {
+deck* del_deck(deck* card, int num) {
     if(card == NULL) return card;
-    if(card->num == num && card->suit == suit) {
+    if(card->num == num ) {
         deck *temp = card->next;
         free(card);
         return temp;
     }
-    del_body(card, card->next, suit, num);
+    del_body(card, card->next, num);
     return card;
 }
 
-void del_body(deck* prev, deck* curr, wchar_t suit, int num) {
+void del_body(deck* prev, deck* curr, int num) {
     if(curr == NULL) return;
-    if(curr->num == num && curr->suit == suit) {
+    if(curr->num == num ) {
         prev->next = curr->next;
         free(curr);
         return ;
     }
-    del_body(curr, curr->next, suit, num);
+    del_body(curr, curr->next, num);
 }
 
 int sp(int size) {
@@ -105,10 +136,34 @@ int sp(int size) {
     return rg;
 }
 
+void print_array(int *arr, int len) {
+    for(int i=0; i<len; i++) 
+        printf("%d \n", arr[i]);
+    printf("\n");
+
+}
 void print_deck(deck *card) {
+    /* wchar_t shape[4] = {0x2664, 0x2662, 0x2661, 0x2667}; */
     if(card != NULL) {
-        wprintf(L"%lc", card->suit);
-        printf(" %2d\n", card->num);
+        if(card->num >= 39)
+            wprintf(L"%lc", 0x2667);
+        else if(card->num >= 26)
+            wprintf(L"%lc", 0x2661);
+        else if(card->num >= 13)
+            wprintf(L"%lc", 0x2662);
+        else
+            wprintf(L"%lc", 0x2664);
+
+        if(card->num%13 == 0)
+            printf(" %2c\n", 'A');
+        else if(card->num%13 == 10)
+            printf(" %2c\n", 'J');
+        else if(card->num%13 == 11)
+            printf(" %2c\n", 'Q');
+        else if(card->num%13 == 12)
+            printf(" %2c\n", 'K');
+        else
+            printf(" %2d\n", card->num%13+1);
         print_deck(card->next);
     }
     else printf("\n\n");
@@ -153,15 +208,14 @@ void sort(deck *card, int low, int high, int dir) {
 
 void bit_sort(deck **card, int len, int dir) {
     int k=2; while( (k*=2) < len) ;
-    for(int i=len; i<k; i++) *card = add_deck(*card, 0x2668, 0);
+    for(int i=len; i<k; i++) *card = add_deck(*card, 0);
     sort(*card, 0, k, dir); 
-    for(int i=len; i<k; i++) *card = del_deck(*card, 0x2668, 0);
+    for(int i=len; i<k; i++) *card = del_deck(*card, 0);
 }
 
 char* strDup(const char* str){
     int n = strlen(str) + 1;
     char *dup = (char *)malloc(sizeof(char)*n);
-    if (dup)
         strcpy(dup, str);
     return dup;
 }
@@ -173,22 +227,17 @@ int strCmp(void * vp1, void * vp2) {
 }
 
 void set_trump(deck **card) {
-    wchar_t s_name[4] = {0x2664, 0x2662, 0x2661, 0x2667};
-    for(int i=0; i<4; i++) {
-        for(int j=0; j<13; j++) {
-            *card = add_deck(*card, s_name[i], j%13+1);
-        }
+    for(int i=0; i<52; i++) {
+        *card = add_deck(*card, i+1);
     }
 }
 
 void shuffle(deck **card, int ea) {
-    wchar_t s_name[4] = {0x2664, 0x2662, 0x2661, 0x2667};
-    int r1, r2;
+    int r1;
     for(int i=0; i<ea; i++) {
-        r1 = rand()%4;
-        r2 = rand()%13+1;
-        *card = del_deck(*card, s_name[r1], r2);
-        *card = add_deck(*card, s_name[r1], r2);
+        r1 = rand()%52;
+        *card = del_deck(*card, r1);
+        *card = add_deck(*card, r1);
     } 
 }
 
