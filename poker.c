@@ -5,7 +5,7 @@
 #include<string.h>
 #include<time.h>
 
-#define run 1000
+#define run 10000
 
 typedef struct Deck{
     int num;
@@ -42,7 +42,7 @@ void combi(deck* a, int *d, int ss,int ee,int index,int r) {
 }
 
 int is_flush(deck *p) {
-    wchar_t shape[4] = {0x2664, 0x2662, 0x2661, 0x2667};
+    wchar_t shape[] = {0x2668, 0x2664, 0x2662, 0x2661, 0x2667};
     deck *curr = p;
     int res[5]={0,};
     for(int i=0; i<7; i++) {
@@ -53,34 +53,47 @@ int is_flush(deck *p) {
         else  res[0]++;
         curr = curr->next;
     }    
-    for(int i=1; i<5; i++) if(res[i] >= 5) return shape[i];
+    for(int i=0; i<5; i++) if(res[i] >= 5) return shape[i];
     return 0;
 }
 
+void swap_int(int *a, int *b) { int t=*a; *a=*b; *b=t; }
+
 int is_straight(deck *p) {
     deck *curr = p;
-    int res[14]={0,};
+    int res[15]={-1,};
     for(int i=0; i<7; i++) {
-        res[i]=curr->num%13+1;
-        if(res[i] == 1) 
-            res[7+i] = 14;
+        res[i] = curr->num%13 + 1;
+        if(res[i] == 1) res[7+i] = 14;
+        else if(res[i] == 2) res[7+i] = 15;
+        else if(res[i] == 3) res[7+i] = 16;
+        else if(res[i] == 4) res[7+i] = 17;
         curr = curr->next;
     }
     
     for(int i=0; i<14; i++) {
         for(int j=0; j<14; j++) {
-            if(res[i]==res[j]) res[j] = -1;
-            if(res[i]>res[j]) swap(&res[i], &res[j], sizeof(int));
+            if(i != j && res[i] == res[j]) res[j] = -1;
         }
     }
+    for(int i=0; i<14; i++) {
+        for(int j=0; j<14; j++) {
+            if(res[i]>res[j]) swap(&res[i], &res[j], sizeof(int));
+            /* if(res[i]>res[j]) swap_int(&res[i], &res[j]); */
+        }
+    }
+
+    /* for(int i=0; i<14; i++) printf("%d ", res[i]); printf("\n"); */
 
     for(int i=0, k=0; i<11; i++) {
         k=0;
         for(int j=i; j<4; j++) {
             if(res[j]  == res[j+1] + 1) k++;
             if(k==4) {
-                if(res[i] == 14)
-                    return 1;
+                if(res[i] == 14) return 1;
+                if(res[i] == 15) return 13;
+                if(res[i] == 16) return 12;
+                if(res[i] == 17) return 11;
                 return res[i];
             }
         }
@@ -96,7 +109,7 @@ int is_pair(deck *p, int n) {
         curr = curr->next;
     }    
 
-    if(res[0]==n) return 1;
+    if(res[0]>=n) return 1;
     for(int i=12; i>=1; i--) if(res[i] == n) return i+1;
     return 0;
 }
@@ -104,6 +117,37 @@ int is_pair(deck *p, int n) {
 int is_onepair(deck *p) { return is_pair(p, 2); }
 int is_threecard(deck *p) { return is_pair(p, 3); }
 int is_fourcard(deck *p) { return is_pair(p, 4); }
+
+int is_fullhouse(deck *p) {
+    deck *curr = p;
+    int res[13]={0,};
+    for(int i=0; i<7; i++) {
+        res[curr->num%13]++;
+        curr = curr->next;
+    }
+
+    int a=0, b=0, k=0;
+    if(res[0] == 3) {
+        k++;
+        a = 1;
+    }
+    for(int i=12; i>=1; i--) {
+        if(res[i] == 3) {
+            k++;
+            if(k==1) a = i+1;
+            if(k==2) b = i+1;
+        }
+    }
+    if(k == 1) {
+        for(int i=12; i>=1; i--) {
+            if(res[i] == 2) {
+                k++;
+                if(k==2) b = i+1;
+            }
+        }
+    }
+    return a*100+b;
+}
 
 int is_twopair(deck *p) {
     deck *curr = p;
@@ -125,7 +169,6 @@ int is_twopair(deck *p) {
             if(k==2) b = i+1;
         }
     }
-
     return a*100+b;
 }
 
@@ -147,7 +190,7 @@ int main(void) {
         "6", "7", "8", "9", "10", "J", "Q", "K" };
     srand(time(NULL));
     char *locale = setlocale(LC_ALL, "");
-    int players = 6;
+    int players = 10;
     deck *card = NULL; 
     set_trump(&card);
     /* print_deck(card); */
@@ -156,7 +199,7 @@ int main(void) {
 
     int res[10]={0,};
     for(int k=0; k<run; k++) {
-        shuffle(&card, 1000);    
+        shuffle(&card, 10000);    
         /* print_deck(card); */
         curr = card;
         for(int i=0; i<players; i++) 
@@ -167,7 +210,7 @@ int main(void) {
             for(int j=0; j<2; j++) {
                 curr = curr->next;
                 player[i] = add_deck(player[i], curr->num);
-             }
+            }
         }
 
         flop = NULL;
@@ -177,33 +220,41 @@ int main(void) {
         }
 
 
-        for(int i=0,on=0,to=0,th=0,fo=0,fl=0,st=0; i<players; i++) {
+        for(int i=0,on=0,to=0,t2=0,t1=0,th=0,fo=0,fh=0,fl=0,st=0; i<players; i++) {
             printf("player #%d : ", i+1);
             print_deck(player[i]);
             player[i]->next->next = flop;
-            st = is_straight(player[i]);
-            fl = is_flush(player[i]);
             fo = is_fourcard(player[i]);
+            fl = is_flush(player[i]);
+            st = is_straight(player[i]);
+
             th = is_threecard(player[i]);
+            fh = is_fullhouse(player[i]);
+            t1 = fh?fh%(th*100):0;
+
             on = is_onepair(player[i]);
             to = is_twopair(player[i]);
-            to = to?to%(on*100):0;
+            t2 = to?to%(on*100):0;
 
 
-            if(fo > 0 && st > 0) {
-                printf("Straight flush (%s)\n", order[fo]);
+            if(fl > 0 && st == 1 ) {
+                printf("Royal flush (%s %s)\n", order[fo], order[st]);
+                res[0]++;
+            }
+            else if(fl > 0 && st > 0) {
+                printf("Straight flush (%s %s)\n", order[fo], order[st]);
                 res[1]++;
             }
             else if(fo > 0) { 
                 printf("Four card (%s)\n", order[fo]);
                 res[2]++;
             }
-            else if(th > 0 && to > 0) {
-                printf("Full house (%s, %s)\n", order[th], order[to]);
+            else if(th > 0 && t1 > 0) {
+                printf("Full house (%s, %s)\n", order[th], order[t1]);
                 res[3]++;
             }
             else if(fl > 0) {
-                wprintf(L"Flush (%lc)\n", fl);
+                wprintf(L"Flush (%lc )\n", fl);
                 res[4]++;
             }
             else if(st > 0) {
@@ -214,12 +265,12 @@ int main(void) {
                 printf("Three card (%s)\n", order[th]);
                 res[6]++;
             }
-            else if(on>0 && to>0) {
-                printf("Two pair (%s %s)\n", order[on], order[to]);
+            else if(on>0 && t2>0) {
+                printf("Two pair (%s %s)\n", order[on], order[t2]);
                 res[7]++;
             }
-            else if(on>0 || to>0) {
-                printf("One pair (%s)\n", on?order[on]:order[to]);
+            else if(on>0 || t2>0) {
+                printf("One pair (%s)\n", on?order[on]:order[t2]);
                 res[8]++;
             }
             else {
@@ -240,7 +291,7 @@ int main(void) {
         "Flush", "Straight", "Three of kind", "Two pair", "One pair", "High card"};
     for(int i=0; i<10; i++) {
         printf("%15s = %5d / %d = %.5lf%%\n", 
-        hand[i], res[i], run*players, (double)res[i]*100/(run*players));
+                hand[i], res[i], run*players, (double)res[i]*100/(run*players));
     }
 
     return 0; 
