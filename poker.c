@@ -5,6 +5,8 @@
 #include<string.h>
 #include<time.h>
 
+#define run 1000
+
 typedef struct Deck{
     int num;
     struct Deck *next;
@@ -39,60 +41,208 @@ void combi(deck* a, int *d, int ss,int ee,int index,int r) {
     }
 }
 
-int is_paire(deck *p) {
-    int arr[7];
+int is_flush(deck *p) {
+    wchar_t shape[4] = {0x2664, 0x2662, 0x2661, 0x2667};
     deck *curr = p;
+    int res[5]={0,};
     for(int i=0; i<7; i++) {
-        arr[i] = curr->num;
+        if(curr->num >= 39) res[4]++;
+        else if(curr->num >= 26) res[3]++;
+        else if(curr->num >= 13) res[2]++;
+        else if(curr->num >= 0 ) res[1]++;
+        else  res[0]++;
+        curr = curr->next;
+    }    
+    for(int i=1; i<5; i++) if(res[i] >= 5) return shape[i];
+    return 0;
+}
+
+int is_straight(deck *p) {
+    deck *curr = p;
+    int res[14]={0,};
+    for(int i=0; i<7; i++) {
+        res[i]=curr->num%13+1;
+        if(res[i] == 1) 
+            res[7+i] = 14;
+        curr = curr->next;
+    }
+    
+    for(int i=0; i<14; i++) {
+        for(int j=0; j<14; j++) {
+            if(res[i]==res[j]) res[j] = -1;
+            if(res[i]>res[j]) swap(&res[i], &res[j], sizeof(int));
+        }
+    }
+
+    for(int i=0, k=0; i<11; i++) {
+        k=0;
+        for(int j=i; j<4; j++) {
+            if(res[j]  == res[j+1] + 1) k++;
+            if(k==4) {
+                if(res[i] == 14)
+                    return 1;
+                return res[i];
+            }
+        }
+    }
+    return 0;
+}
+
+int is_pair(deck *p, int n) {
+    deck *curr = p;
+    int res[13]={0,};
+    for(int i=0; i<7; i++) {
+        res[curr->num%13]++;
         curr = curr->next;
     }    
 
+    if(res[0]==n) return 1;
+    for(int i=12; i>=1; i--) if(res[i] == n) return i+1;
+    return 0;
 }
-int main(void) { 
-    srand(time(NULL));
-    char *locale = setlocale(LC_ALL, "");
-    deck *card = NULL;
-    set_trump(&card);
-    shuffle(&card, 1000);    
-    /* print_deck(card); */
 
-    int players = 6;
-    deck **player = (deck **)malloc(sizeof(deck*)*players);
-    deck *flop;
-    deck *curr = card;
-    for(int i=0; i<players; i++) {
-        player[i] = (deck *)malloc(sizeof(deck));
-        player[i] = NULL;
-        for(int j=0; j<2; j++) {
-            curr = curr->next;
-            player[i] = add_deck(player[i], curr->num);
+int is_onepair(deck *p) { return is_pair(p, 2); }
+int is_threecard(deck *p) { return is_pair(p, 3); }
+int is_fourcard(deck *p) { return is_pair(p, 4); }
+
+int is_twopair(deck *p) {
+    deck *curr = p;
+    int res[13]={0,};
+    for(int i=0; i<7; i++) {
+        res[curr->num%13]++;
+        curr = curr->next;
+    }    
+
+    int a=0, b=0, k=0;
+    if(res[0] == 2) {
+        k++;
+        a = 1;
+    }
+    for(int i=12; i>=1; i--) {
+        if(res[i] == 2) {
+            k++;
+            if(k==1) a = i+1;
+            if(k==2) b = i+1;
         }
     }
-    for(int i=0; i<5; i++) {
+
+    return a*100+b;
+}
+
+int is_hicard(deck *p) {
+    deck *curr = p;
+    int high=0;
+    for(int i=0, t; i<2; i++) {
+        t = curr->num%13+1;
+        if(t == 1) return 1;
+        if(high<t) high = t;
         curr = curr->next;
-        flop = add_deck(flop, curr->num);
+    }    
+    return high;
+}
+
+
+int main(void) { 
+    char *order[] = { "0", "A", "2", "3", "4", "5", 
+        "6", "7", "8", "9", "10", "J", "Q", "K" };
+    srand(time(NULL));
+    char *locale = setlocale(LC_ALL, "");
+    int players = 6;
+    deck *card = NULL; 
+    set_trump(&card);
+    /* print_deck(card); */
+    deck **player = (deck **)malloc(sizeof(deck*)*players);
+    deck *flop = NULL, *curr = NULL;
+
+    int res[10]={0,};
+    for(int k=0; k<run; k++) {
+        shuffle(&card, 1000);    
+        /* print_deck(card); */
+        curr = card;
+        for(int i=0; i<players; i++) 
+            player[i] = (deck *)malloc(sizeof(deck));
+
+        for(int i=0; i<players; i++) {
+            player[i] = NULL;
+            for(int j=0; j<2; j++) {
+                curr = curr->next;
+                player[i] = add_deck(player[i], curr->num);
+             }
+        }
+
+        flop = NULL;
+        for(int i=0; i<5; i++) {
+            curr = curr->next;
+            flop = add_deck(flop, curr->num);
+        }
+
+
+        for(int i=0,on=0,to=0,th=0,fo=0,fl=0,st=0; i<players; i++) {
+            printf("player #%d : ", i+1);
+            print_deck(player[i]);
+            player[i]->next->next = flop;
+            st = is_straight(player[i]);
+            fl = is_flush(player[i]);
+            fo = is_fourcard(player[i]);
+            th = is_threecard(player[i]);
+            on = is_onepair(player[i]);
+            to = is_twopair(player[i]);
+            to = to?to%(on*100):0;
+
+
+            if(fo > 0 && st > 0) {
+                printf("Straight flush (%s)\n", order[fo]);
+                res[1]++;
+            }
+            else if(fo > 0) { 
+                printf("Four card (%s)\n", order[fo]);
+                res[2]++;
+            }
+            else if(th > 0 && to > 0) {
+                printf("Full house (%s, %s)\n", order[th], order[to]);
+                res[3]++;
+            }
+            else if(fl > 0) {
+                wprintf(L"Flush (%lc)\n", fl);
+                res[4]++;
+            }
+            else if(st > 0) {
+                printf("Straight (%s)\n", order[st]);
+                res[5]++;
+            }
+            else if(th > 0 ) {
+                printf("Three card (%s)\n", order[th]);
+                res[6]++;
+            }
+            else if(on>0 && to>0) {
+                printf("Two pair (%s %s)\n", order[on], order[to]);
+                res[7]++;
+            }
+            else if(on>0 || to>0) {
+                printf("One pair (%s)\n", on?order[on]:order[to]);
+                res[8]++;
+            }
+            else {
+                printf("high card (%s)\n", order[is_hicard(player[i])] );
+                res[9]++;
+            }
+        }
+        printf("#%d : FLop : ", k+1);
+        print_deck(flop);
+        printf("\n\n");
+        /* int *d=(int*)malloc(sizeof(int)*5); */        
+        /* combi(flop, d, 0, 4, 0, 3); */
+        for(int i=0; i<players; i++) free(player[i]);
     }
 
-    printf(" List : \n");
-    for(int i=0; i<players; i++) 
-        print_deck(player[i]); 
-    printf(" FLop : \n");
-    print_deck(flop);
 
+    char *hand[]={"Royal flush", "Straight flush", "Four of a kind", "Full house", 
+        "Flush", "Straight", "Three of kind", "Two pair", "One pair", "High card"};
+    for(int i=0; i<10; i++) {
+        printf("%15s = %5d / %d = %.5lf%%\n", 
+        hand[i], res[i], run*players, (double)res[i]*100/(run*players));
+    }
 
-
-    //
-    for(int i=0; i<players; i++)
-        player[i]->next->next = flop;
-
-
-    /* int *d=(int*)malloc(sizeof(int)*5); */        
-    /* combi(flop, d, 0, 4, 0, 3); */
-
-
-    for(int i=0; i<players; i++)
-        free(player[i]);
-    free(player);
     return 0; 
 }
 
@@ -146,27 +296,28 @@ void print_deck(deck *card) {
     /* wchar_t shape[4] = {0x2664, 0x2662, 0x2661, 0x2667}; */
     if(card != NULL) {
         if(card->num >= 39)
-            wprintf(L"%lc", 0x2667);
+            wprintf(L"(%lc", 0x2667);
         else if(card->num >= 26)
-            wprintf(L"%lc", 0x2661);
+            wprintf(L"(%lc", 0x2661);
         else if(card->num >= 13)
-            wprintf(L"%lc", 0x2662);
+            wprintf(L"(%lc", 0x2662);
         else
-            wprintf(L"%lc", 0x2664);
-
-        if(card->num%13 == 0)
-            printf(" %2c\n", 'A');
-        else if(card->num%13 == 10)
-            printf(" %2c\n", 'J');
-        else if(card->num%13 == 11)
-            printf(" %2c\n", 'Q');
-        else if(card->num%13 == 12)
-            printf(" %2c\n", 'K');
+            wprintf(L"(%lc", 0x2664);
+        int k = card->num%13;
+        if(k == 0)
+            printf("%3c)", 'A');
+        else if(k == 10)
+            printf("%3c)", 'J');
+        else if(k == 11)
+            printf("%3c)", 'Q');
+        else if(k == 12)
+            printf("%3c)", 'K');
         else
-            printf(" %2d\n", card->num%13+1);
+            printf(" %2d)", k+1);
+        printf("  ");
         print_deck(card->next);
     }
-    else printf("\n\n");
+    else printf(" : ");
 }
 
 deck* index_deck(deck* card, int n) {
@@ -216,7 +367,7 @@ void bit_sort(deck **card, int len, int dir) {
 char* strDup(const char* str){
     int n = strlen(str) + 1;
     char *dup = (char *)malloc(sizeof(char)*n);
-        strcpy(dup, str);
+    strcpy(dup, str);
     return dup;
 }
 
@@ -228,7 +379,7 @@ int strCmp(void * vp1, void * vp2) {
 
 void set_trump(deck **card) {
     for(int i=0; i<52; i++) {
-        *card = add_deck(*card, i+1);
+        *card = add_deck(*card, i);
     }
 }
 
