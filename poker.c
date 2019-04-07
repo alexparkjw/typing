@@ -5,7 +5,7 @@
 #include<string.h>
 #include<time.h>
 
-#define run 10000
+#define run 1000
 
 typedef struct Deck{
     int num;
@@ -41,6 +41,13 @@ void combi(deck* a, int *d, int ss,int ee,int index,int r) {
     }
 }
 
+int is_straightflush(deck *p) {
+    int *d=(int*)malloc(sizeof(int)*5);        
+    combi(p, d, 0, 7, 0, 5);
+    free(d);
+    return 0;
+}
+
 int is_flush(deck *p) {
     wchar_t shape[] = {0x2668, 0x2664, 0x2662, 0x2661, 0x2667};
     deck *curr = p;
@@ -49,28 +56,23 @@ int is_flush(deck *p) {
         if(curr->num >= 39) res[4]++;
         else if(curr->num >= 26) res[3]++;
         else if(curr->num >= 13) res[2]++;
-        else if(curr->num >= 0 ) res[1]++;
-        else  res[0]++;
+        else  res[1]++;
+        /* printf("res[0] = %d\n", res[0]); */
         curr = curr->next;
     }    
     for(int i=0; i<5; i++) if(res[i] >= 5) return shape[i];
     return 0;
 }
 
-void swap_int(int *a, int *b) { int t=*a; *a=*b; *b=t; }
-
 int is_straight(deck *p) {
     deck *curr = p;
-    int res[15]={-1,};
+    int res[14]={-1,};
     for(int i=0; i<7; i++) {
         res[i] = curr->num%13 + 1;
         if(res[i] == 1) res[7+i] = 14;
-        else if(res[i] == 2) res[7+i] = 15;
-        else if(res[i] == 3) res[7+i] = 16;
-        else if(res[i] == 4) res[7+i] = 17;
         curr = curr->next;
     }
-    
+
     for(int i=0; i<14; i++) {
         for(int j=0; j<14; j++) {
             if(i != j && res[i] == res[j]) res[j] = -1;
@@ -79,21 +81,17 @@ int is_straight(deck *p) {
     for(int i=0; i<14; i++) {
         for(int j=0; j<14; j++) {
             if(res[i]>res[j]) swap(&res[i], &res[j], sizeof(int));
-            /* if(res[i]>res[j]) swap_int(&res[i], &res[j]); */
         }
     }
 
     /* for(int i=0; i<14; i++) printf("%d ", res[i]); printf("\n"); */
 
-    for(int i=0, k=0; i<11; i++) {
+    for(int i=0, k=0; i<12; i++) {
         k=0;
         for(int j=i; j<4; j++) {
             if(res[j]  == res[j+1] + 1) k++;
-            if(k==4) {
+            if(k>=4) {
                 if(res[i] == 14) return 1;
-                if(res[i] == 15) return 13;
-                if(res[i] == 16) return 12;
-                if(res[i] == 17) return 11;
                 return res[i];
             }
         }
@@ -289,6 +287,7 @@ int main(void) {
 
     char *hand[]={"Royal flush", "Straight flush", "Four of a kind", "Full house", 
         "Flush", "Straight", "Three of kind", "Two pair", "One pair", "High card"};
+    res[1]+=res[0];  // (excl. royal flush)
     for(int i=0; i<10; i++) {
         printf("%15s = %5d / %d = %.5lf%%\n", 
                 hand[i], res[i], run*players, (double)res[i]*100/(run*players));
@@ -341,8 +340,8 @@ void print_array(int *arr, int len) {
     for(int i=0; i<len; i++) 
         printf("%d \n", arr[i]);
     printf("\n");
-
 }
+
 void print_deck(deck *card) {
     /* wchar_t shape[4] = {0x2664, 0x2662, 0x2661, 0x2667}; */
     if(card != NULL) {
