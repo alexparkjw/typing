@@ -7,10 +7,9 @@ int main(void) {
     scanf("%d %d", &n, &k);
     char *input = (char *)malloc(sizeof(char)*(n+1));
     scanf(" %s", input);
-    int num = 0;
-    int num1 = 0;
-    int flag = 0;
-    int out;
+
+    int num = 0, num1 = 0,  num2 = 0;
+    int flag = 0,  out;
 
     if(input[0] == 'W') flag = 1;
 
@@ -19,23 +18,27 @@ int main(void) {
             num += (int)pow(2, n-i-1);
     }
    
+    num1 = num;
     for(int i=0; i<k; i++) {
-        num1 = num << 1 ;       
-        num1 += flag;
-        num = num ^ num1;
+        num2 = num1 << 1 ;       
+        num2 += flag;
+        num1 = num1 ^ num2;
     } 
 
-    for(int i = 31; i >=0; i--) {
-        out = num >> i;
-        if(i < n) {
-            if ( out & 1) 
-                printf("W");
-            else
-                printf("B");
-        }
-    }
+    num2 = num1 ^ num;
 
-    printf("\n");
+    printf("%d\n", num2);
+
+    /* for(int i = 31; i >=0; i--) { */
+    /*     out = num2 >> i; */
+    /*     if(i < n) { */
+    /*         if ( out & 1) */ 
+    /*             printf("W"); */
+    /*         else */
+    /*             printf("B"); */
+    /*     } */
+    /* } */
+    /* printf("\n"); */
 
     return 0;
 }
