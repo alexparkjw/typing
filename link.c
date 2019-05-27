@@ -3,7 +3,7 @@
 #include<string.h>
 #include<time.h>
 
-#define random_range 9
+#define random_range 99
 
 typedef struct Node { 
     int data; 
@@ -26,16 +26,21 @@ int main(void) {
     srand(time(NULL));
     node *head = NULL;
 
-    int len = 20;
+    int len = 10;
     for(int i=0; i<len; i++) { 
         head = add_node(head, rand()%random_range+1);
     }
 
+    printf("random node: ");
     print_node(head); 
     printf("\n");
+
+    printf("sorted up  : ");
     bit_sort(&head, len, 1); 
     print_node(head); 
     printf("\n");
+
+    printf("sorted down: ");
     bit_sort(&head, len, 0); 
     print_node(head); 
     printf("\n");
@@ -66,7 +71,6 @@ node* del_head(node* head, int data) {
     del_body(head, head->next,  data);
     return head;
 }
-
 
 void del_body(node* prev, node* curr,int data) {
     if(curr == NULL) return;
@@ -138,4 +142,11 @@ void bit_sort(node **head, int len, int dir) {
     sort(*head, 0, k, dir); 
     for(int i=len; i<k; i++) *head = del_head(*head, 0);
 }
+
+
+
+
+
+
+
 

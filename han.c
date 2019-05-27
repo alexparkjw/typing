@@ -3,7 +3,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdio.h>
-/* #include<stddef.h> */
+#include<stddef.h>
 
 #define random_range 11172
 
@@ -29,19 +29,29 @@ void foo3() {
     printf("\n");
 }
 
+void foo4() {
+    
+    for(int i=0; i<8; i++ ) { 
+        wprintf(L"%lc", rand()%random_range + 0xac00);
+    }
+    printf("\n");
+}
+
+
+void foo5() {
+    for(wchar_t i=0x0; i<0xff; i++ ) { 
+        if((i+12)%28==0) printf("\n");
+        wprintf(L"%lc", i);
+    }
+    int i=0;
+    printf("\n%d\n", ++i + i++);
+}
+
 int main(void) {
     srand(time(NULL));
     char *locale = setlocale(LC_ALL, "");
 
-    int k = 0x2660;
-    for(int j=0; j<30; j++) {
-        for(int i=0; i<12; i++) 
-            wprintf(L"%lc", k++); 
-        printf("\n");
-    }
-
-
-
+    foo5();
     return 0;
 }
 
