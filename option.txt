@@ -1,6 +1,6 @@
-1. Set repeats:basic 
-2. Set repeats:words
-3. Set repeats:sentence
-4. Set repeats:paragraph
-4. Set repeats:game
-5. Exit of Option
+1. Set basic 
+2. Set words
+3. Set sentence
+4. Set paragraph
+4. Set game
+5. Exit Option

@@ -1,6 +1,6 @@
-1. stand positon 
-2. up position
-3. down position
-4. special position
-5. number position
+1. stand  
+2. upper 
+3. lower 
+4. special
+5. numbers 
 6. exit

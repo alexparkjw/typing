@@ -1,50 +1,36 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-int rotate(int num_a, int n, int k) {
-    int num_c = num_a, num_b, flag;
+void rotate(int n, int k, char *str) {
+    char cp[n+1];
+    strcpy(cp, str);
     for(int i=0; i<k; i++) {
-        flag = num_c & (int)pow(2, n-1);
-        num_b = num_c << 1; 
-        num_b += flag;
-        num_c = num_c ^ num_b;
+        char tmp[2];
+        tmp[0] = cp[0];
+        tmp[1] = '\0';
+        strcpy(cp, str+1);
+        strcat(cp, tmp);
+        strcpy(str, cp);
     }
-    return num_c;
 }
-
 
 int main(void) {
     int n, k;
-    scanf("%d %d", &n, &k);
-    char *input = (char *)malloc(sizeof(char)*(n+1));
-    scanf(" %s", input);
+    /* scanf("%d %d", &n, &k); */
+    n = 3;
+    k = 2;
+    char input[n+1];
+    /* scanf(" %s", input); */
+    strcpy(input, "ABC");
 
-    // convert input to num;
-    int num;
-    for(int i=0; i<n; i++) {
-        if(input[i] == 'W')
-            num += (int)pow(2, n-i-1);
-    }
-   
-    // counting
-    int count = 1;
-    for(int i=0, size=(int)pow(2, n-1); i<size; i++) {
-        if(rotate(i, n, k) == rotate(num, n, k)) 
-            count++;
-    }
-    printf("%d\n", count);
+    printf("%s\n", input);
 
-    /* for(int i = 31; i >=0; i--) { */
-    /*     out = num_c >> i; */
-    /*     if(i < n) { */
-    /*         if ( out & 1) */ 
-    /*             printf("W"); */
-    /*         else */
-    /*             printf("B"); */
-    /*     } */
-    /* } */
-    /* printf("\n"); */
+    rotate(n, k, input);
+    printf("%s\n", input);
+
+
+    
 
     return 0;
 }

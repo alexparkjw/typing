@@ -51,7 +51,7 @@ int main(void) {
     srand(time(NULL));
     char *locale = setlocale(LC_ALL, "");
 
-    foo5();
+    foo1();
     return 0;
 }
 

@@ -1,4 +1,4 @@
-#include<stdio.h>
+/* #include<stdio.h> */
 #include<stdlib.h> 
 #include<string.h>
 #include<time.h>
@@ -7,14 +7,18 @@
 #include<ncurses.h>
 #include<unistd.h>
 
-#define HEIGHT 48
+#define HEIGHT 40
 #define WIDTH 120
+#define SIZE_N 60
+#define wwp(k) newwin(k->h,k->w,k->y,k->x)
+#define ww(k) newwin(k.h,k.w,k.y,k.x)
+#define rr(k) rand()%(k)
 
 sem_t mutex;
 
 typedef struct Vector {
-    int o, h, w, y;
-    int x; WINDOW *win;
+    int o, h, w, y, x;
+    WINDOW *win;
     char **data;
     int len;
 }vector;
@@ -35,24 +39,24 @@ void *type(void *);
 void option_menu(vector *, int **);
 int set_option(vector *); 
 int cline(FILE *);
-vector * fileToData(char *, vector *, int, int );
+vector * fileToData(char *, vector *, int, int, int, int );
 void load_option(char *filename, int **op);
 void save_option(char *filename, int **op);
 
 
 int main(void) { 
-    srand(time(NULL));
+    srand((unsigned)time(NULL)*getpid());
     initscr();
     // combine vector
     vector *menu=NULL, *basic=NULL, *words=NULL, *game=NULL;
     vector *sentence=NULL, *paragraph=NULL, *option=NULL;
-    menu = fileToData("menu.txt", menu, 4, 4);
-    basic = fileToData("basic.txt", menu, 4, 2);
-    words = fileToData("words.txt", words, 6, 1);
-    game = fileToData("words.txt", game, 1, 1);
-    sentence = fileToData("short.txt", sentence, 6, 1);
-    paragraph = fileToData("paragraph.txt", paragraph, 2, 1); 
-    option = fileToData("option.txt", option, 4, 4);
+    menu = fileToData("menu.txt", menu, 4, 4, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/4)/2);
+    basic = fileToData("basic.txt", menu, 4, 2, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/2)/2);
+    words = fileToData("words.txt", words, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2);
+    game = fileToData("words.txt", game, 1, 1, (HEIGHT - HEIGHT/1)/2, (WIDTH - WIDTH/1)/2);
+    sentence = fileToData("short.txt", sentence, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2);
+    paragraph = fileToData("paragraph.txt", paragraph, 2, 1, (HEIGHT - HEIGHT/2)/2, (WIDTH - WIDTH/1)/2);
+    option = fileToData("option.txt", option, 4, 4, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/4)/2);
 
     int *op[]= { &basic->o, &words->o, &sentence->o, &paragraph->o , &game->o};
     load_option("option.conf", op);
@@ -124,11 +128,8 @@ int main(void) {
                 else if(highlight == 5) {
                     werase(menu->win);
                     wrefresh(menu->win);
-                    for(int i=0; i < game->o; i++) {
-                        if(print_game(game))
-                            break;
-                    }
-                    cbreak();
+                    print_game(game);
+                    /* cbreak(); */
                     werase(game->win);
                     wrefresh(game->win);
                 }
@@ -279,7 +280,7 @@ int set_basic(WINDOW *win, char *temp, int lv ) {
                 wrefresh(win);
                 return 1;
                 break;
-            case 127: case KEY_BACKSPACE:
+            case 127: case 8: case KEY_BACKSPACE:
                 mvwprintw(win, y, --x, " \b");
                 mvwprintw(win, y-2, x, " \b");
                 i--;
@@ -342,7 +343,7 @@ int print_words(vector * words ) {
                 wrefresh(words->win);
                 return 1;
                 break;
-            case 127: case KEY_BACKSPACE:
+            case 127: case 8: case KEY_BACKSPACE:
                 mvwprintw(words->win, y, --x, " \b");
                 mvwprintw(words->win, y-2, x, " \b");
                 i--;
@@ -401,7 +402,7 @@ int print_sentence(vector *sentence ) {
                 wrefresh(sentence->win);
                 return 1;
                 break;
-            case 127: case KEY_BACKSPACE:
+            case 127: case 8: case KEY_BACKSPACE:
                 mvwprintw(sentence->win, y, --x, " \b");
                 mvwprintw(sentence->win, y-2, x, " \b");
                 i--;
@@ -466,7 +467,7 @@ int print_graph(vector *paragraph, int *l ) {
                     wrefresh(paragraph->win);
                     return 1;
                     break;
-                case 127: case KEY_BACKSPACE:
+                case 127: case 8: case KEY_BACKSPACE:
                     mvwprintw(paragraph->win, 4*j+y, --x, " \b");
                     mvwprintw(paragraph->win, 4*j+y-2, x, " \b");
                     i--;
@@ -511,54 +512,38 @@ int print_graph(vector *paragraph, int *l ) {
 int print_game(vector *game ) {
     box(game->win, 0, 0);
     wrefresh(game->win);
-    
-    int num = 3;
-    vector **s=(vector**)malloc(sizeof(vector*)*num);
-    for(int i=0; i<num; i++) {
-        s[i]=(vector*)malloc(sizeof(vector));
-        s[i]->data=(char**)malloc(sizeof(char*)*1);
-        s[i]->data[0] = strDup( game->data[rand()%game->len]);
-        s[i]->h = HEIGHT / 8;
-        s[i]->w = WIDTH / 4; s[i]->y = 1;
-        s[i]->x = (i*30)+1;
-        s[i]->win = newwin(s[i]->h, s[i]->w, s[i]->y, s[i]->x );    
+
+    /* sem_open((char*)&mutex, 0, 1); */
+    /* sem_init(&mutex, 0, 1); */
+
+    vector *s[6];
+    for(int i=0; i<6; i++) {
+        s[i] = fileToData("words.txt", s[i], 16, 10, 1, 1);
     }
 
-    sem_open((char*)&mutex, 0, 4);
-    pthread_t tids[num+1];
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    int sum[3]={}, r;
-    for(int j=0; sum[0]+sum[1]+sum[2]!=120 ; j++) {
-        for(int i=0; i<num; i++) {
-            if(j != 0 && s[i]->y <= 40) {
-                werase(s[i]->win);
-                wrefresh(s[i]->win);
+    pthread_t tids[6];
+    pthread_attr_t attr[6];
 
-                if(sum[i] < 40) r = rand()%3+1;
-                else r = 0;
-
-                s[i]->y += r;
-                s[i]->win=newwin(s[i]->h, s[i]->w, s[i]->y, s[i]->x);
-                sum[i]=s[i]->y;
-                if(s[i]->y > 40) 
-                    s[i]->y = 40; 
-            }
-            if(sum[i] > 40) {
-                sum[i] = 40;
-            }
-            pthread_create(&tids[i], &attr, rain, s[i]);
-            sleep(1);
-            pthread_create(&tids[4], &attr, type, game);
-            sleep(1);
-        }
-        sleep(1);
+    for(int i=0; i<6; i++) {
+        pthread_attr_init(&attr[i]);
+        pthread_create(&tids[i], &attr[i], rain, s[i]);
+        /* usleep(1100000); */
+        sleep(2);
+        /* pthread_join(tids[i], NULL); */
     }
-    
-    for(int i=0; i<num; i++) 
-        pthread_join(tids[i], NULL);
-    /* pthread_join(tids[4], NULL); */
-    sem_unlink((char*)&mutex);
+
+    /* pthread_join(tids, NULL); */
+    /* sem_unlink((char*)&mutex); */
+
+    /* pthread_join(tids, NULL); */
+    /* sem_unlink((char*)&mutex); */
+    /* sem_destroy(&mutex); */
+
+    int ch;
+    while( (ch=wgetch(game->win)) != '\n') ;
+
+    werase(game->win);
+    wrefresh(game->win);
     return 0;
 }
 
@@ -576,7 +561,7 @@ void *type(void *v) {
                 wrefresh(game->win);
                 pthread_exit(0);
                 break;
-            case 127: case KEY_BACKSPACE:
+            case 127: case 8: case KEY_BACKSPACE:
                 mvwprintw(game->win, y, --x, " \b");
                 ii--;
                 break;
@@ -596,14 +581,27 @@ void *type(void *v) {
     pthread_exit(0);
 }
 
-void *rain(void *v) {
-    sem_wait(&mutex);
-    vector *s = (vector *)v;
-    box(s->win, 0, 0);
-    mvwprintw(s->win, 1, 1, "%s", s->data[rand()%20]);
+void *rain(void *w) {
+    /* sem_wait(&mutex); */
+    vector *s = (vector *)w;
+    s->x = rand()%(WIDTH-20)+1;
+    int rnum=rand()%s->len;
+    while(s->y < HEIGHT - s->h - 1) {
+        werase(s->win);
+        wrefresh(s->win);
+        s->w = strlen(s->data[rnum])+2;
+        s->win=wwp(s);;
+        /* box(s->win, 0, 0); */
+        mvwprintw(s->win, 1, 1, "%s", s->data[rnum]);
+        wrefresh(s->win);
+        s->y++;
+        usleep(300000);
+    }
     werase(s->win);
     wrefresh(s->win);
-    sem_post(&mutex);
+    s->y = 1;
+
+    /* sem_post(&mutex); */
     pthread_exit(0);
 }
 
@@ -670,7 +668,7 @@ int set_option(vector *option) {
     while( (ch=wgetch(option->win)) != '\n') {
         switch (ch) 
         {
-            case 127: case KEY_BACKSPACE:
+            case 127: case 8: case KEY_BACKSPACE:
                 mvwprintw(option->win, y, --x, " \b");
                 i--;
                 break;
@@ -716,7 +714,7 @@ int cline(FILE *fp) {
     return count;
 } 
 
-vector * fileToData(char *filename, vector *v, int h, int w) {
+vector * fileToData(char *filename, vector *v, int h, int w, int y, int x) {
     v = (vector*)malloc(sizeof(vector));
     FILE *fp=fopen(filename, "r");
     if(fp == NULL) {
@@ -734,8 +732,11 @@ vector * fileToData(char *filename, vector *v, int h, int w) {
     }
     v->h = HEIGHT/h;
     v->w = WIDTH/w;
-    v->y = (HEIGHT - v->h)/2;
-    v->x = (WIDTH - v->w)/2;
+    v->y = y;
+    v->x = x;
+    /* v->y = (HEIGHT - v->h)/2; */
+    /* v->x = (WIDTH - v->w)/2; */
+    /* (HEIGHT - v->h)/2, (WIDTH - v->w)/2; */
     v->win = newwin(v->h, v->w, v->y, v->x);
 
     fclose(fp);
