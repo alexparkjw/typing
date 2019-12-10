@@ -35,11 +35,11 @@ c. windows 설치 : 아래링크로 가면 자동 다운로드 후 설치
 
 a. GitHub 에 가입한다: 아이디,패스워드,이메일을 등록하구 , 이메일가서 확인을 하면 가입이 된다.
 
-b. git repository 생성 : 웹페이지에서 new repository 클릭한후 repository name 을 지어주고create repository 버튼을 눌러서 만든다. (여기선 아이디는 alexparkjw 이고 리파지토리 이름은 ask 이라고 임으로 만들었다)
+b. git repository 생성 : 웹페이지에서 new repository 클릭한후 repository name 을 지어주고create repository 버튼을 눌러서 만든다. (여기선 아이디는 alexparkjw 이고 리파지토리 이름은 typing 이라고 임으로 만들었다)
 
 터미널에서 
 ```
-echo "# ask" >> README.md
+echo "# typing" >> README.md
 git init
 git add README.md
 git commit -m "first commit"
@@ -97,7 +97,7 @@ f. 다른 작업공간에서 리파지토리를 복사해오기
 ```
 git clone https://github.com/alexparkjw/typing.git
 ```
-- 명령을 하면 ask 디렉토리가 생성되고, 그안에 .git/ 서브 디렉토리가 생성된다. 
+- 명령을 하면 typing 디렉토리가 생성되고, 그안에 .git/ 서브 디렉토리가 생성된다. 
 
 - 이것을 이용하여 여러기기나 혹은 여러명이서 작업을 하고 각자 수정하여 올릴 수 있으며,마스터는 그 수정본들을 비교분석하여 선택적으로 우수한것을 택하여, 버전업하여 올리는 형식이란 것을 짐작 할 수 있다.
 
