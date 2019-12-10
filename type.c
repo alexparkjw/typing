@@ -7,7 +7,7 @@
 #include<ncurses.h>
 #include<unistd.h>
 
-#define HEIGHT 40
+#define HEIGHT 44
 #define WIDTH 120
 #define SIZE_N 60
 #define wwp(k) newwin(k->h,k->w,k->y,k->x)
