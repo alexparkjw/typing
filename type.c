@@ -15,6 +15,7 @@
 #define rr(k) rand()%(k)
 
 sem_t mutex;
+pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct Vector {
     int o, h, w, y, x;
@@ -516,21 +517,28 @@ int print_game(vector *game ) {
     /* sem_open((char*)&mutex, 0, 1); */
     /* sem_init(&mutex, 0, 1); */
 
-    vector *s[6];
+    vector *s[6], *kb;
     for(int i=0; i<6; i++) {
         s[i] = fileToData("words.txt", s[i], 16, 10, 1, 1);
     }
 
-    pthread_t tids[6];
-    pthread_attr_t attr[6];
+    kb = fileToData("words.txt", kb, 10, 10, 1, 1);
+    pthread_t tids_key;
+    pthread_attr_t attr_key;
+    pthread_attr_init(&attr_key);
+    pthread_create(&tids_key, &attr_key, type, s[0]);
+    pthread_join(tids_key, NULL);
 
-    for(int i=0; i<6; i++) {
-        pthread_attr_init(&attr[i]);
-        pthread_create(&tids[i], &attr[i], rain, s[i]);
+    /* pthread_t tids[6]; */
+    /* pthread_attr_t attr[6]; */
+
+    /* for(int i=0; i<6; i++) { */
+        /* pthread_attr_init(&attr[i]); */
+        /* pthread_create(&tids[i], &attr[i], rain, s[i]); */
         /* usleep(1100000); */
-        sleep(2);
+        /* sleep(2); */
         /* pthread_join(tids[i], NULL); */
-    }
+    /* } */
 
     /* pthread_join(tids, NULL); */
     /* sem_unlink((char*)&mutex); */
@@ -548,12 +556,12 @@ int print_game(vector *game ) {
 }
 
 void *type(void *v) {
-    sem_wait(&mutex);
+    /* sem_wait(&mutex); */
     vector *game = (vector *)v;
     box(game->win, 0, 0);
     char temp[150];
     int  ch, ii=0, y=30, x=30;
-    while( (ch=wgetch(game->win)) != '\n' ) {
+    while( (ch=wgetch(game->win)) ) {
         switch (ch) 
         {
             case 27:
@@ -574,18 +582,21 @@ void *type(void *v) {
         if(x<30) x=30;
     }
     temp[ii]='\0';
-
+    
     werase(game->win);
     wrefresh(game->win);
-    sem_post(&mutex);
+
+    /* sem_post(&mutex); */
     pthread_exit(0);
 }
 
 void *rain(void *w) {
     /* sem_wait(&mutex); */
+    /* pthread_mutex_lock(&mutex1); */
     vector *s = (vector *)w;
     s->x = rand()%(WIDTH-20)+1;
     int rnum=rand()%s->len;
+    char intput[100];
     while(s->y < HEIGHT - s->h - 1) {
         werase(s->win);
         wrefresh(s->win);
@@ -596,12 +607,14 @@ void *rain(void *w) {
         wrefresh(s->win);
         s->y++;
         usleep(300000);
+
     }
     werase(s->win);
     wrefresh(s->win);
     s->y = 1;
 
     /* sem_post(&mutex); */
+    /* pthread_mutex_unlock(&mutex1); */
     pthread_exit(0);
 }
 
