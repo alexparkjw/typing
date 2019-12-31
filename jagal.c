@@ -29,7 +29,6 @@ int main(void) {
     rotate(n, k, input);
     printf("%s\n", input);
 
-
     
 
     return 0;
