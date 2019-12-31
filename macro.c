@@ -10,9 +10,52 @@
 #include <time.h>
 #include <assert.h>
 
+#ifdef __APPLE__
+#include <dispatch/dispatch.h>
+#else
+#include <semaphore.h>
+#endif
+
+struct rk_sema {
+#ifdef __APPLE__
+    dispatch_semaphore_t    sem;
+#else
+    sem_t                   sem;
+#endif
+};
+
+static inline void rk_sema_init(struct rk_sema *s, uint32_t value) {
+#ifdef __APPLE__
+    dispatch_semaphore_t *sem = &s->sem;
+
+    *sem = dispatch_semaphore_create(value);
+#else
+    sem_init(&s->sem, 0, value);
+#endif
+}
+
+static inline void rk_sema_wait(struct rk_sema *s) {
+#ifdef __APPLE__
+    dispatch_semaphore_wait(s->sem, DISPATCH_TIME_FOREVER);
+#else
+    int r;
+    do {
+            r = sem_wait(&s->sem);
+    } while (r == -1 && errno == EINTR);
+#endif
+}
+
+static inline void rk_sema_post(struct rk_sema *s) {
+#ifdef __APPLE__
+    dispatch_semaphore_signal(s->sem);
+#else
+    sem_post(&s->sem);
+#endif
+}
+
 #define WIDTH 90
 #define HEIGHT 50
-#define SIZE_N 10
+#define SIZE_N 21
 #define endl printf("\n")
 #define rr(k) rand()%(k)
 #define class(p) struct Class (p);\
@@ -42,22 +85,18 @@ void *bar(void *n);
 void *rain(void *n);
 
 // SHARE DATA
+/* sem_t mutex; */
+/* pthread_mutex_t mutex; */
+struct rk_sema s;
 pthread_t tids[SIZE_N];
 pthread_attr_t attr;
 /* pthread_cancel(tids[i]); */
 
 char **data;
-volatile int count;
+volatile int count_down;
+volatile int count_up;
 
 int main(void) {
-	/* class(pos); */
-	/* pos.set(&pos, 10, 20); */
-    /* pos.put(&pos); */
-
-	/* class2(pos2); */
-	/* pos2->set(pos2, 30, 10); */
-    /* pos2->put(pos2); */
-	
     // CONVERT DATA FILE to ARRAY
     FILE *fp = fopen("words.txt", "r");
     int n_data = len_func(fp);
@@ -80,20 +119,26 @@ int main(void) {
     curs_set(FALSE);
 
     // INIT PTHREAD 
+    /* sem_open((char*)&mutex, 0, 1); */
+    /* sem_init(&mutex, 0, 1); */
+    rk_sema_init(&s, 1);
     pthread_attr_init(&attr);
     pthread_create(&tids[0], &attr, bar, n_rand);
-    usleep(2000000);
+    usleep(1000000);
 
     for(int i=1; i<SIZE_N; i++) {
         pthread_attr_init(&attr);
         // FUCTION CALL
         pthread_create(&tids[i], &attr, rain, data[n_rand[i]]);
-        usleep(2000000);
+        usleep(1000000);
         /* sleep(2); */
     }
     pthread_join(tids[0], NULL);
     for(int i=1; i<SIZE_N; i++) 
         pthread_join(tids[i], NULL);
+
+    /* sem_unlink((char*)&mutex); */
+    /* sem_destroy(&mutex); */
 
     // END
     /* while( (ch=getch()) != '\n') ; */
@@ -106,8 +151,9 @@ void *bar(void *n) {
     int i=0, x=2, y=2, ch=0;
     char temp[100];
     WINDOW *type=newwin(5, 20, (HEIGHT- 6), (WIDTH)/2-10);
+    WINDOW *life=newwin(3, 10, (HEIGHT- 6), (WIDTH)/2-20);
 
-    while(true && count < SIZE_N-1) {
+    while(SIZE_N - count_up - count_down > 1 ) {
         /* curs_set(TRUE); */
         if(kbhit())
         {
@@ -115,40 +161,55 @@ void *bar(void *n) {
             switch (ch)
             {
                 case 127: case 8: case KEY_BACKSPACE:
+                    rk_sema_wait(&s);
                     mvwprintw(type, y, --x, " \b");
                     wrefresh(type);
+                    rk_sema_post(&s);
                     i--;
                     break;
                 case 10: case ' ': 
                     temp[i] = '\0';
                     while(x > 0) {
+                        rk_sema_wait(&s);
                         mvwprintw(type, y, --x, " \b");
                         wrefresh(type);
+                        rk_sema_post(&s);
                     }
                     i=0;
                     break;
                 default:
                     temp[i]=ch;
+                    rk_sema_wait(&s);
                     mvwprintw(type, y, x++, "%c", temp[i]);
                     wrefresh(type);
+                    rk_sema_post(&s);
                     i++;
                     break;
             }
             if(i<0) i=0;
             if(x<2) x=2;
+            rk_sema_wait(&s);
             mvwprintw(type, y, x, "");
             box(type, 0, 0);
             wrefresh(type);
+            rk_sema_post(&s);
         } 
         else 
         {
+            rk_sema_wait(&s);
+            mvwprintw(type, y, x, "");
+            box(type, 0, 0);
+            wrefresh(type);
+            rk_sema_post(&s);
             if(ch==10 || ch==' ') {
                 /* curs_set(FALSE); */
                 for(int i=1; i<index_data[0]; i++) {
-                    if(strcmp(temp, data[index_data[i]])==0 ) {
-                        count++;
+                    if(strcmp(temp, data[index_data[i]])==0 && tids[i] != NULL) {
+                        count_up++;
+                        rk_sema_wait(&s);
                         erase();
                         refresh();
+                        rk_sema_post(&s);
                         pthread_cancel(tids[i]);
                     }
                 }
@@ -156,6 +217,11 @@ void *bar(void *n) {
             ch = 0;
             /* sleep(1); */
         }
+        rk_sema_wait(&s);
+        mvwprintw(life, 1, 1, "%3d %3d", SIZE_N-1-count_up, SIZE_N-1-count_down);
+        box(life, 0, 0);
+        wrefresh(life);
+        rk_sema_post(&s);
     }
     pthread_exit(0);
 }
@@ -167,18 +233,24 @@ void *rain(void *wi) {
 
     WINDOW *block=newwin(h,w,y,x); 
     while(y < HEIGHT-8) {
+        /* sem_wait(&mutex); */
+        rk_sema_wait(&s);
         werase(block);
         wrefresh(block);
         block=newwin(h,w,y++,x);
         mvwprintw(block, 1, 1, "%s", ldata);
         box(block, 0, 0);
         wrefresh(block);
+        /* sem_post(&mutex); */
+        rk_sema_post(&s);
         /* sleep(1); */
-        usleep(600000);
+        usleep(300000);
     }
-    count++;
+    rk_sema_wait(&s);
+    count_down++;
     werase(block);
     wrefresh(block);
+    rk_sema_post(&s);
     pthread_exit(0);
 }
 
