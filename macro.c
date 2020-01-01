@@ -62,7 +62,7 @@ static inline void rk_sema_post(struct rk_sema *s) {
 }
 
 typedef struct Vector {
-	int x, y, h, w, o, len;
+    int x, y, h, w, o, len;
     char **data;
     WINDOW *win;
 	void (*set)(struct Vector*, int, int, int, int, int, char**);
@@ -307,7 +307,7 @@ void *bar(void *n) {
     WINDOW *type=newwin(5, 20, (HEIGHT- 6), (WIDTH)/2-10);
     WINDOW *life=newwin(3, 10, (HEIGHT- 6), (WIDTH)/2-20);
 
-    while(SIZE_N - count_up - count_down >= 1 ) {
+    while(SIZE_N - count_up - count_down > 1 ) {
         /* curs_set(TRUE); */
         if(kbhit())
         {
