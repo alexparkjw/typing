@@ -7,9 +7,59 @@
 //
 
 /* #include <stdio.h> */
-#include "header.h"
-#include "sem.h"
-#include <ncurses.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <curses.h>
+#include <pthread.h>
+#include <time.h>
+#include <assert.h>
+
+#ifdef __APPLE__
+#include <dispatch/dispatch.h>
+#else
+#include <semaphore.h>
+#endif
+
+struct rk_sema {
+#ifdef __APPLE__
+    dispatch_semaphore_t    sem;
+#else
+    sem_t                   sem;
+#endif
+};
+
+static inline void rk_sema_init(struct rk_sema *s, uint32_t value) {
+#ifdef __APPLE__
+    dispatch_semaphore_t *sem = &s->sem;
+    *sem = dispatch_semaphore_create(value);
+#else
+    sem_init(&s->sem, 0, value);
+#endif
+}
+
+static inline void rk_sema_wait(struct rk_sema *s) {
+#ifdef __APPLE__
+    dispatch_semaphore_wait(s->sem, DISPATCH_TIME_FOREVER);
+#else
+    int r;
+    do {
+            r = sem_wait(&s->sem);
+    } while (r == -1 && errno == EINTR);
+#endif
+}
+
+static inline void rk_sema_post(struct rk_sema *s) {
+#ifdef __APPLE__
+    dispatch_semaphore_signal(s->sem);
+#else
+    sem_post(&s->sem);
+#endif
+}
 
 typedef struct Vector {
     int x, y, h, w, o, len;
@@ -68,56 +118,47 @@ char **data_words;
 char **data_sentence;
 char **data_paragraph;
 char **data_option;
-char ***data = { &data_menu, &data_basic, &data_words, &data_sentence, &data_paragraph, &data_option};
 
 volatile int count_down;
 volatile int count_up;
 
 int main(void) {
     // CONVERT DATA FILE to ARRAY
-    char *files[] = { "menu.txt", "basic.txt", "words.txt", "sentence.txt", "paragraph.txt", "option.txt" };
-    int lens[6]; 
-    for(int i=0, n=sizeof(files)/sizeof(files[0]); i<n; i++) {
-        FILE *fp = fopen(files[i], "r");
-        if(fp == NULL) {
-            printf("the file: %s can not be opend!\n", files[i]);
-            exit(1);
-        }
-        lens[i] = len_func(fp);
-        data[i] = save_func(fp, lens[i]);
-        fclose(fp);
-    }
+    FILE *fp_menu = fopen("menu.txt", "r");
+    int len_menu = len_func(fp_menu);
+    data_menu = save_func(fp_menu, len_menu);
+    fclose(fp_menu);
 
-    /* FILE *fp_basic = fopen("basic.txt", "r"); */
-    /* int len_basic = len_func(fp_basic); */
-    /* data_basic = save_func(fp_basic, len_basic); */
-    /* fclose(fp_basic); */
+    FILE *fp_basic = fopen("basic.txt", "r");
+    int len_basic = len_func(fp_basic);
+    data_basic = save_func(fp_basic, len_basic);
+    fclose(fp_basic);
 
-    /* FILE *fp_words = fopen("words.txt", "r"); */
-    /* int len_words = len_func(fp_words); */
-    /* data_words = save_func(fp_words, len_words); */
-    /* fclose(fp_words); */
+    FILE *fp_words = fopen("words.txt", "r");
+    int len_words = len_func(fp_words);
+    data_words = save_func(fp_words, len_words);
+    fclose(fp_words);
 
-    /* FILE *fp_sentence = fopen("sentence.txt", "r"); */
-    /* int len_sentence = len_func(fp_sentence); */
-    /* data_sentence = save_func(fp_sentence, len_sentence); */
-    /* fclose(fp_sentence); */
+    FILE *fp_sentence = fopen("sentence.txt", "r");
+    int len_sentence = len_func(fp_sentence);
+    data_sentence = save_func(fp_sentence, len_sentence);
+    fclose(fp_sentence);
 
-    /* FILE *fp_paragraph = fopen("paragraph.txt", "r"); */
-    /* int len_paragraph = len_func(fp_paragraph); */
-    /* data_paragraph = save_func(fp_paragraph, len_paragraph); */
-    /* fclose(fp_paragraph); */
+    FILE *fp_paragraph = fopen("paragraph.txt", "r");
+    int len_paragraph = len_func(fp_paragraph);
+    data_paragraph = save_func(fp_paragraph, len_paragraph);
+    fclose(fp_paragraph);
 
-    /* FILE *fp_option = fopen("option.txt", "r"); */
-    /* int len_option = len_func(fp_option); */
-    /* data_option = save_func(fp_option, len_option); */
-    /* fclose(fp_option); */
+    FILE *fp_option = fopen("option.txt", "r");
+    int len_option = len_func(fp_option);
+    data_option = save_func(fp_option, len_option);
+    fclose(fp_option);
 
     // RANDOMIZE INDEX
     srand((unsigned)time(NULL)*getpid());
     int n_rand[SIZE_N] = { SIZE_N, };
     for(int i=1; i<SIZE_N; i++)
-        n_rand[i] = rr(lens[2]);
+       n_rand[i] = rr(len_words);
 
     // INIT NCURSES
     initscr();
@@ -135,13 +176,13 @@ int main(void) {
     vector(sentence);
     vector(paragraph);
     vector(option);
-    menu->set(menu, 4, 4, (HEIGHT-HEIGHT/4)/2, (WIDTH-WIDTH/4)/2, lens[0], data_menu);
-    menu->set( basic, 4, 2, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/2)/2, lens[1], data_basic);
-    words->set( words, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, lens[2], data_words);
-    sentence->set( sentence, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, lens[3], data_sentence);
-    paragraph->set( paragraph, 2, 1, (HEIGHT - HEIGHT/2)/2, (WIDTH - WIDTH/1)/2, lens[4], data_paragraph);
-    option->set(option, 4, 4, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/4)/2, lens[5], data_option);
-
+    menu->set(menu, 4, 4, (HEIGHT-HEIGHT/4)/2, (WIDTH-WIDTH/4)/2, len_menu, data_menu);
+    menu->set( basic, 4, 2, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/2)/2, len_basic, data_basic);
+    words->set( words, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, len_words, data_words);
+    sentence->set( sentence, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, len_sentence, data_sentence);
+    paragraph->set( paragraph, 2, 1, (HEIGHT - HEIGHT/2)/2, (WIDTH - WIDTH/1)/2, len_paragraph, data_paragraph);
+    option->set(option, 4, 4, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/4)/2, len_option, data_option);
+        
     int *op[]= { &basic->o, &words->o, &sentence->o, &paragraph->o};
     load_option("option.conf", op);
 
@@ -421,7 +462,7 @@ int len_func(FILE *fp) {
     char buff[300];
     int len = 0;
     while(fgets(buff, sizeof(buff) - 1, fp) != NULL) {
-        /* fputs(buff, stdout); //error check */
+        /* fputs(buff, stdout); */
         len++;
     }
     fseek(fp, 0, SEEK_SET); /* rewind(fp) */
@@ -430,15 +471,15 @@ int len_func(FILE *fp) {
 
 char **save_func(FILE *fp, int len) {
     fseek(fp, 0, SEEK_SET); /* rewind(fp) */
-    char buffer[200];
-    char  **arr = (char**)malloc(sizeof(char*)*len);
-    for (int i = 0; i<len; i++) {
+    char buffer[100], **arr = (char**)malloc(sizeof(char*)*len);
+    for (int i = 0, n;i<len; i++) {
         fgets(buffer, sizeof(buffer)-1 , fp);
         buffer[strcspn(buffer, "\n")] = 0;
-        /* fprintf(fp, "%s\n", buffer); // error check */
+        /* fprintf(fp, "%s\n", buffer); */
         arr[i] = (char*)malloc(sizeof(buffer));
         strcpy(arr[i], buffer);
         /* arr[i] = strdup(buffer); */
+        /* printf("%s\n", arr[i]); */
     }
     return arr;
 }
@@ -482,7 +523,7 @@ void print_basic(vector *basic) {
             case 'j': case KEY_DOWN:
                 if(highlight == basic->len)
                     highlight = 1;
-                else 
+                    else 
                     ++highlight;
                 break;
             case '\n':
@@ -531,10 +572,10 @@ int set_basic(WINDOW *win, char *temp, int lv ) {
     char ra[30];
     for(int i=0; i<6; i++) {
         for(int j=0; j<5; j++) {
-            if(j==4)
-                ra[i*5+j]=' ';
-            else
-                ra[i*5+j]=ran[lv][rand()%k];
+           if(j==4)
+               ra[i*5+j]=' ';
+           else
+               ra[i*5+j]=ran[lv][rand()%k];
         }
     }
     ra[29]='\0';

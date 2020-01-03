@@ -1,13 +1,13 @@
 //
-//  Header.h
+//  header.h
 //  type
 //
 //  Created by alex jw park on 2019/12/13.
 //  Copyright © 2019 alex jw park. All rights reserved.
 //
 
-#ifndef Header_h
-#define Header_h
+#ifndef header_h
+#define header_h
 
 #include <semaphore.h>
 #include <sys/types.h>
@@ -22,4 +22,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#endif /* Header_h */
+#endif /* header_h */
+
+
+

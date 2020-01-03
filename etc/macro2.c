@@ -65,7 +65,7 @@ typedef struct Vector {
     int x, y, h, w, o, len;
     char **data;
     WINDOW *win;
-	void (*set)(struct Vector*, int, int, int, int, int, char**);
+    void (*set)(struct Vector*, int, int, int, int, int, char**);
     void (*put)(struct Vector*);
 }vector;
 
@@ -372,7 +372,7 @@ void *bar(void *n) {
             /* sleep(1); */
         }
         rk_sema_wait(&s);
-        mvwprintw(life, 1, 1, "%3d %3d", SIZE_N-1-count_up, SIZE_N-1-count_down);
+        mvwprintw(life, 1, 1, "%3d %3d", count_up, SIZE_N-1-count_down);
         box(life, 0, 0);
         wrefresh(life);
         rk_sema_post(&s);
