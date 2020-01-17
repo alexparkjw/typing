@@ -15,12 +15,12 @@ int main() {
     /* char *key_str = strdup("kiwi"); */
 
     char **found_str = search(&key_str, str, size_str, sizeof(char*), strCmp);
-	if(found_str == NULL) 
+    if(found_str == NULL) 
         printf("not found\n");
-	else 
+    else 
         printf("str[%ld] = \"%s\"\n", found_str-str, *found_str);
 
-	return 0;
+    return 0;
 }
 
 
