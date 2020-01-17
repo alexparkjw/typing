@@ -6,10 +6,10 @@
 //  Copyright © 2020 Alex. All rights reserved.
 //
 
-#include <stdio.h>
+/* #include <stdio.h> */
+#include <ncurses.h>
 #include "header.h"
 #include "sem.h"
-#include <ncurses.h>
 
 typedef struct Vector {
     int x, y, h, w, o, len;
@@ -19,7 +19,6 @@ typedef struct Vector {
     void (*put)(struct Vector*);
 }vector;
 
-
 #define WIDTH 90
 #define HEIGHT 45
 #define SIZE_N 21
@@ -28,7 +27,6 @@ typedef struct Vector {
 #define vector(p) struct Vector (*p)=(struct Vector *)malloc(sizeof(struct Vector));\
                  (p)->set=set;\
                  (p)->put=put
-
 
 void set(vector *self, int w, int h, int y, int x, int len, char **data);
 void put(vector *self);
@@ -41,7 +39,6 @@ char **save_func(FILE *fp, int len);
 void *bar(void *n);
 void *rain(void *n);
 
-void print_array(char **a, int n);
 void print_menu(vector *menu, int highlight );
 void print_basic(vector *basic);
 int set_basic(WINDOW *win, char *temp, int lv );
@@ -63,9 +60,6 @@ pthread_attr_t attr;
 
 
 // SHARE DATA
-volatile int count_down;
-volatile int count_up;
-
 char **data_menu;
 char **data_basic;
 char **data_words;
@@ -73,35 +67,50 @@ char **data_sentence;
 char **data_paragraph;
 char **data_option;
 
+volatile int count_down;
+volatile int count_up;
+
 int main(void) {
     // CONVERT DATA FILE to ARRAY
-    char *files[] = { 
-        "./text/menu.txt", "./text/basic.txt", "./text/words.txt", 
-        "./text/sentence.txt", "./text/paragraph.txt", "./text/option.txt" 
-    };
+    char *file[] = { "./text/menu.text", "./text/basic.txt", "./text/words.txt", 
+        "/text/sentense.txt", "./text/paragraph.txt", "./text/option.txt"};
+    char **data[6]={data_menu, data_basic, data_words, data_sentence, data_paragraph, data_option}; 
+    
+    FILE *fp_menu = fopen("./text/menu.txt", "r");
+    int len_menu = len_func(fp_menu);
+    data_menu = save_func(fp_menu, len_menu);
+    fclose(fp_menu);
 
-    char **data[] = { 
-        data_menu, data_basic, data_words, 
-        data_sentence, data_paragraph, data_option 
-    };
+    FILE *fp_basic = fopen("./text/basic.txt", "r");
+    int len_basic = len_func(fp_basic);
+    data_basic = save_func(fp_basic, len_basic);
+    fclose(fp_basic);
 
-    int lens[6];
-    for(int i=0; i<6; i++) {
-        FILE *fp = fopen(files[i], "r");
-        if(fp == NULL) {
-            printf("the file: %s can not be opend!\n", files[i]);
-            exit(1);
-        }
-        lens[i] = len_func(fp);
-        data[i] = save_func(fp, lens[i]);
-        fclose(fp);
-    }
+    FILE *fp_words = fopen("./text/words.txt", "r");
+    int len_words = len_func(fp_words);
+    data_words = save_func(fp_words, len_words);
+    fclose(fp_words);
+
+    FILE *fp_sentence = fopen("./text/sentence.txt", "r");
+    int len_sentence = len_func(fp_sentence);
+    data_sentence = save_func(fp_sentence, len_sentence);
+    fclose(fp_sentence);
+
+    FILE *fp_paragraph = fopen("./text/paragraph.txt", "r");
+    int len_paragraph = len_func(fp_paragraph);
+    data_paragraph = save_func(fp_paragraph, len_paragraph);
+    fclose(fp_paragraph);
+
+    FILE *fp_option = fopen("./text/option.txt", "r");
+    int len_option = len_func(fp_option);
+    data_option = save_func(fp_option, len_option);
+    fclose(fp_option);
 
     // RANDOMIZE INDEX
     srand((unsigned)time(NULL)*getpid());
     int n_rand[SIZE_N] = { SIZE_N, };
     for(int i=1; i<SIZE_N; i++)
-        n_rand[i] = rr(lens[2]);
+       n_rand[i] = rr(len_words);
 
     // INIT NCURSES
     initscr();
@@ -119,13 +128,13 @@ int main(void) {
     vector(sentence);
     vector(paragraph);
     vector(option);
-    menu->set(menu, 4, 4, (HEIGHT-HEIGHT/4)/2, (WIDTH-WIDTH/4)/2, lens[0], data_menu);
-    menu->set( basic, 4, 2, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/2)/2, lens[1], data_basic);
-    words->set( words, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, lens[2], data_words);
-    sentence->set( sentence, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, lens[3], data_sentence);
-    paragraph->set( paragraph, 2, 1, (HEIGHT - HEIGHT/2)/2, (WIDTH - WIDTH/1)/2, lens[4], data_paragraph);
-    option->set(option, 4, 4, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/4)/2, lens[5], data_option);
-
+    menu->set(menu, 4, 4, (HEIGHT-HEIGHT/4)/2, (WIDTH-WIDTH/4)/2, len_menu, data_menu);
+    menu->set( basic, 4, 2, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/2)/2, len_basic, data_basic);
+    words->set( words, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, len_words, data_words);
+    sentence->set( sentence, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, len_sentence, data_sentence);
+    paragraph->set( paragraph, 2, 1, (HEIGHT - HEIGHT/2)/2, (WIDTH - WIDTH/1)/2, len_paragraph, data_paragraph);
+    option->set(option, 4, 4, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/4)/2, len_option, data_option);
+        
     int *op[]= { &basic->o, &words->o, &sentence->o, &paragraph->o};
     load_option("option.conf", op);
 
@@ -402,25 +411,22 @@ int strCmp(void * vp1, void * vp2) {
 
 int len_func(FILE *fp) {
     fseek(fp, 0, SEEK_SET); /* rewind(fp) */
+    char buff[300];
     int len = 0;
-    char buff[256];
-    while(fgets(buff, sizeof(buff) - 1, fp) != NULL) { len++; }
+    while(fgets(buff, sizeof(buff) - 1, fp) != NULL) {
+        len++;
+    }
     return len;
 }
 
 char **save_func(FILE *fp, int len) {
     fseek(fp, 0, SEEK_SET); /* rewind(fp) */
-    char buffer[256];
-    char  **arr = (char**)malloc(sizeof(char*)*len);
-    for (int i = 0; i<len; i++) {
+    char buffer[100], **arr = (char**)malloc(sizeof(char*)*len);
+    for (int i = 0, n;i<len; i++) {
         fgets(buffer, sizeof(buffer)-1 , fp);
         buffer[strcspn(buffer, "\n")] = 0;
-        arr[i] = (char*)malloc(sizeof(buffer)+1);
+        arr[i] = (char*)malloc(sizeof(buffer));
         strcpy(arr[i], buffer);
-
-        /* char *buffer=(char*)malloc(sizeof(char)*256); */
-        /* fscanf(fp, " %[^\n]", buffer); */
-        /* arr[i] = strdup(buffer); */
     }
     return arr;
 }
@@ -464,7 +470,7 @@ void print_basic(vector *basic) {
             case 'j': case KEY_DOWN:
                 if(highlight == basic->len)
                     highlight = 1;
-                else 
+                    else 
                     ++highlight;
                 break;
             case '\n':
@@ -513,10 +519,10 @@ int set_basic(WINDOW *win, char *temp, int lv ) {
     char ra[30];
     for(int i=0; i<6; i++) {
         for(int j=0; j<5; j++) {
-            if(j==4)
-                ra[i*5+j]=' ';
-            else
-                ra[i*5+j]=ran[lv][rand()%k];
+           if(j==4)
+               ra[i*5+j]=' ';
+           else
+               ra[i*5+j]=ran[lv][rand()%k];
         }
     }
     ra[29]='\0';
@@ -877,9 +883,3 @@ void save_option(char *filename, int **op) {
 }
 
 
-void print_array(char **a, int n) {
-    for(int i=0; i<n; i++) {
-        printf("%s\n", a[i]);
-    }
-    printf("\n");
-}

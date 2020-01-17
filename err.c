@@ -1,11 +1,3 @@
-//
-//  macro.c
-//  typing program
-//
-//  Created by Alex on 01/01/2020.
-//  Copyright © 2020 Alex. All rights reserved.
-//
-
 #include <stdio.h>
 #include "header.h"
 #include "sem.h"
@@ -75,17 +67,15 @@ char **data_option;
 
 int main(void) {
     // CONVERT DATA FILE to ARRAY
-    char *files[] = { 
-        "./text/menu.txt", "./text/basic.txt", "./text/words.txt", 
-        "./text/sentence.txt", "./text/paragraph.txt", "./text/option.txt" 
-    };
-
     char **data[] = { 
         data_menu, data_basic, data_words, 
         data_sentence, data_paragraph, data_option 
     };
-
-    int lens[6];
+    char *files[] = { 
+        "./text/menu.txt", "./text/basic.txt", "./text/words.txt", 
+        "./text/sentence.txt", "./text/paragraph.txt", "./text/option.txt" 
+    };
+    int lens[6]; 
     for(int i=0; i<6; i++) {
         FILE *fp = fopen(files[i], "r");
         if(fp == NULL) {
@@ -96,151 +86,18 @@ int main(void) {
         data[i] = save_func(fp, lens[i]);
         fclose(fp);
     }
-
-    // RANDOMIZE INDEX
-    srand((unsigned)time(NULL)*getpid());
-    int n_rand[SIZE_N] = { SIZE_N, };
-    for(int i=1; i<SIZE_N; i++)
-        n_rand[i] = rr(lens[2]);
-
-    // INIT NCURSES
-    initscr();
-    cbreak();
-    nodelay(stdscr, true);
-    noecho();
-    scrollok(stdscr, true);
-    /* curs_set(FALSE); */
-
-
-    //combine vectors
-    vector(menu);
-    vector(basic);
-    vector(words);
-    vector(sentence);
-    vector(paragraph);
-    vector(option);
-    menu->set(menu, 4, 4, (HEIGHT-HEIGHT/4)/2, (WIDTH-WIDTH/4)/2, lens[0], data_menu);
-    menu->set( basic, 4, 2, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/2)/2, lens[1], data_basic);
-    words->set( words, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, lens[2], data_words);
-    sentence->set( sentence, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, lens[3], data_sentence);
-    paragraph->set( paragraph, 2, 1, (HEIGHT - HEIGHT/2)/2, (WIDTH - WIDTH/1)/2, lens[4], data_paragraph);
-    option->set(option, 4, 4, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/4)/2, lens[5], data_option);
-
-    int *op[]= { &basic->o, &words->o, &sentence->o, &paragraph->o};
-    load_option("option.conf", op);
-
-
-    keypad(menu->win, TRUE);
-    int c = 0, l=0, highlight = 1;
-    while(true) {
-        curs_set(FALSE); 
-        print_menu(menu, highlight);
-        wrefresh(menu->win);
-        c = wgetch(menu->win);
-        switch(c)
-        {
-            case 'k': case KEY_UP:
-                if(highlight == 1)
-                    highlight = menu->len;
-                else
-                    --highlight;
-                break;
-            case 'j': case KEY_DOWN:
-                if(highlight == menu->len)
-                    highlight = 1;
-                else 
-                    ++highlight;
-                break;
-            case '\n':
-                if(highlight == 1) {
-                    werase(menu->win);
-                    wrefresh(menu->win);
-                    print_basic(basic) ;
-                    werase(basic->win);
-                    wrefresh(basic->win);
-                }
-                else if(highlight == 2) {
-                    werase(menu->win);
-                    wrefresh(menu->win);
-                    for(int i=0; i < words->o; i++) {
-                        if(print_words(words) )
-                            break;
-                    }
-                    werase(words->win);
-                    wrefresh(words->win);
-                }
-                else if( highlight == 3) {
-                    werase(menu->win);
-                    wrefresh(menu->win);
-                    for(int i=0; i < sentence->o; i++) {
-                        if(print_sentence(sentence) )
-                            break;
-                    }
-                    werase(sentence->win);
-                    wrefresh(sentence->win);
-                }
-                else if(highlight == 4) {
-                    werase(menu->win);
-                    wrefresh(menu->win);
-                    for(int i=0; i< paragraph->o; i++) {
-                        if( print_graph(paragraph, &l) )
-                            break;
-                    }
-                    werase(paragraph->win);
-                    wrefresh(paragraph->win);
-                }
-                else if(highlight == 5) {
-                    werase(menu->win);
-                    wrefresh(menu->win);
-
-                    // INIT PTHREAD 
-                    /* sem_open((char*)&mutex, 0, 1); */
-                    /* sem_init(&mutex, 0, 1); */
-                    rk_sema_init(&s, 1);
-                    pthread_attr_init(&attr);
-                    pthread_create(&tids[0], &attr, bar, n_rand);
-                    usleep(1000000);
-
-                    for(int i=1; i<SIZE_N; i++) {
-                        pthread_attr_init(&attr);
-                        // FUCTION CALL
-                        pthread_create(&tids[i], &attr, rain, data_words[n_rand[i]]);
-                        usleep(1000000);
-                        /* sleep(2); */
-                    }
-                    pthread_join(tids[0], NULL);
-                    for(int i=1; i<SIZE_N; i++) 
-                        pthread_join(tids[i], NULL);
-                    erase();
-                    refresh();
-                }
-                else if(highlight == 6) {
-                    werase(menu->win);
-                    wrefresh(menu->win);
-                    option_menu(option, op); 
-                    save_option("option.conf", op);
-                    werase(option->win);
-                    wrefresh(option->win);
-                }
-                else if(highlight == 7) {
-                    clrtoeol();
-                    refresh();
-                    endwin();
-                    return 0;
-                }
-                break;
-            default:
-                refresh();
-                break;
-        }
+    for(int i=0; i<1; i++) {
+        print_array(data[i], lens[i]);
     }
 
+    return 0;
+}
 
-
-    // END
-    /* while( (ch=getch()) != '\n') ; */
-    endwin();
-    return 0; 
+void print_array(char **a, int n) {
+    for(int i=0; i<n; i++) {
+        printf("%s\n", a[i]);
+    }
+    printf("\n");
 }
 
 void *bar(void *n) {
@@ -402,24 +259,26 @@ int strCmp(void * vp1, void * vp2) {
 
 int len_func(FILE *fp) {
     fseek(fp, 0, SEEK_SET); /* rewind(fp) */
+    char buff[300];
     int len = 0;
-    char buff[256];
-    while(fgets(buff, sizeof(buff) - 1, fp) != NULL) { len++; }
+    while(fgets(buff, sizeof(buff) - 1, fp) != NULL) {
+        /* fputs(buff, stdout); //error check */
+        len++;
+    }
+    fseek(fp, 0, SEEK_SET); /* rewind(fp) */
     return len;
 }
 
 char **save_func(FILE *fp, int len) {
     fseek(fp, 0, SEEK_SET); /* rewind(fp) */
-    char buffer[256];
+    char buffer[200];
     char  **arr = (char**)malloc(sizeof(char*)*len);
     for (int i = 0; i<len; i++) {
         fgets(buffer, sizeof(buffer)-1 , fp);
         buffer[strcspn(buffer, "\n")] = 0;
-        arr[i] = (char*)malloc(sizeof(buffer)+1);
+        /* fprintf(fp, "%s\n", buffer); // error check */
+        arr[i] = (char*)malloc(sizeof(buffer));
         strcpy(arr[i], buffer);
-
-        /* char *buffer=(char*)malloc(sizeof(char)*256); */
-        /* fscanf(fp, " %[^\n]", buffer); */
         /* arr[i] = strdup(buffer); */
     }
     return arr;
@@ -877,9 +736,3 @@ void save_option(char *filename, int **op) {
 }
 
 
-void print_array(char **a, int n) {
-    for(int i=0; i<n; i++) {
-        printf("%s\n", a[i]);
-    }
-    printf("\n");
-}
