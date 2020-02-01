@@ -80,22 +80,32 @@ int main(void) {
         "./text/sentence.txt", "./text/paragraph.txt", "./text/option.txt" 
     };
 
-    char **data[] = { 
-        data_menu, data_basic, data_words, 
-        data_sentence, data_paragraph, data_option 
-    };
+    char **data[] = { data_menu, data_basic, data_words, data_sentence, data_paragraph, data_option };
 
     int lens[6];
+    FILE *fp[6];
     for(int i=0; i<6; i++) {
-        FILE *fp = fopen(files[i], "r");
-        if(fp == NULL) {
+        fp[i] = fopen(files[i], "r");
+        if(fp[i] == NULL) {
             printf("the file: %s can not be opend!\n", files[i]);
             exit(1);
         }
-        lens[i] = len_func(fp);
-        data[i] = save_func(fp, lens[i]);
-        fclose(fp);
+        lens[i] = len_func(fp[i]);
+        // ---------------------------------------------
+        /* data[i] = save_func(fp[i], lens[i]);  // 아래 6개를 이부분으로 대체하면 에러 */
+        // ---------------------------------------------
     }
+
+    data_menu = save_func(fp[0], lens[0]);
+    data_basic = save_func(fp[1], lens[1]);
+    data_words = save_func(fp[2], lens[2]);
+    data_sentence = save_func(fp[3], lens[3]);
+    data_paragraph = save_func(fp[4], lens[4]);
+    data_option  = save_func(fp[5], lens[5]);
+
+    for(int i=0; i<6; i++)
+        fclose(fp[i]);
+
 
     // RANDOMIZE INDEX
     srand((unsigned)time(NULL)*getpid());
