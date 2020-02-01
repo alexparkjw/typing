@@ -12,6 +12,7 @@ int **gp = NULL;
 int main(void) {
     // 배열 
     int arr[R][C] = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} };
+    printf("배열은 -> print1()\n");
     print2(R, C, arr);
 
     // 포인터
@@ -30,6 +31,7 @@ int main(void) {
     gp = dp;
     
     //확인용 출력1
+    printf("for()문 복사는 -> print1()\n");
     print1(R, C, dp);
     print1(R, C, gp);
 
@@ -37,6 +39,7 @@ int main(void) {
     memcpy(dp, arr, sizeof(int**)*R*C);
 
     // 확인용 출력 2
+    printf("memcopy() 복사는 -> print2()\n");
     print2(R, C, dp);
     print2(R, C, gp);
 
@@ -71,3 +74,15 @@ void print2(int r, int c, void *vp) {
     }
     printf("\n");
 }
+
+
+
+
+
+
+
+
+
+
+
+
