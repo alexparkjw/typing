@@ -6,12 +6,13 @@
 #define C 3
 
 void memCpy(void *dest, void *src, size_t size);
-void print(int **arr, int r, int c);
+void print(int **a, int r, int c);
 int **gp = NULL;
 
 int main(void) {
     // 배열 
     int arr[R][C] = { {1, 2, 3}, {4, 5, 6}, {7,8,9} };
+    print(arr, R, C);
 
     // 포인터
     int **dp = (int**)malloc(sizeof(int*)*R);
@@ -24,6 +25,8 @@ int main(void) {
     gp = dp;
     
     //확인용출력
+    print(arr, R, C);
+    print(dp, R, C);
     print(gp, R, C);
 
     // 메모리 해제
@@ -31,22 +34,22 @@ int main(void) {
         free(dp[i]);
     free(dp);
 
-
     return EXIT_SUCCESS;
 }
 
 void memCpy(void *dest, void *src, size_t size) { 
-    char *c_src = (char *)src; 
-    char *c_dest = (char *)dest; 
+    char *c_src = *(char **)src; 
+    char *c_dest = *(char **)dest; 
     for (int i=0; i<size; i++) 
         c_dest[i] = c_src[i]; 
 } 
 
-void print(int **arr, int r, int c) {
-    for(int j=0; j<r; j++) {
-        for(int i=0; j<c; i++) {
-            printf("%d ", arr[i][j]);
-        }
+void print(int **a, int r, int c) {
+    for(int i=0; i<r; i++) {
+        for(int j=0; j<c; j++) 
+            printf("%d ", a[i][j]);
         printf("\n");
     }
+    printf("\n");
 }
+
