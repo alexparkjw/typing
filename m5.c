@@ -5,7 +5,7 @@
 #define R 3
 #define C 3
 
-void print(int r, int c, int a[r][c]);
+void print(int r, int c, void *vp);
 int **gp = NULL;
 
 int main(void) {
@@ -13,8 +13,10 @@ int main(void) {
     int arr[R][C] = { {1, 2, 3}, {4, 5, 6}, {7,8,9} };
 
     // 포인터
-    int **dp = (int**)malloc(sizeof(int*)*R);
-    for(int i=0; i<R; i++) dp[i] = (int*)malloc(sizeof(int)*C);
+    int **dp = NULL;
+    dp  = (int**)malloc(sizeof(int*)*R);
+    for(int i=0; i<R; i++) 
+        dp[i] = (int*)malloc(sizeof(int)*C);
 
     // 배열 -> 포인터
     memcpy(dp, arr, sizeof(int**)*R*C);
@@ -28,17 +30,18 @@ int main(void) {
     print(R, C, gp);
 
     // 메모리 해제
-    for(int i=0; i<R; i++)
-        free(dp[i]);
+    /* for(int i=0; i<R; i++) */ 
+        /* free(dp[i]); */
     free(dp);
 
     return EXIT_SUCCESS;
 }
 
-void print(int r, int c, int a[r][c]) {
+void print(int r, int c, void *vp) {
+    int (*a)[c] = vp; 
     for(int i=0; i<r; i++) {
         for(int j=0; j<c; j++) 
-            printf("%d ", a[i][j]);
+            printf("%d ", *(*(a+i)+j));
         printf("\n");
     }
     printf("\n");
