@@ -6,7 +6,6 @@
 //  Copyright © 2020 Alex. All rights reserved.
 //
 
-#include <stdio.h>
 #include "header.h"
 #include "sem.h"
 #include <ncurses.h>
@@ -22,7 +21,7 @@ typedef struct Vector {
 
 #define WIDTH 90
 #define HEIGHT 45
-#define SIZE_N 21
+#define SIZE_N 101
 #define endl printf("\n")
 #define rr(k) rand()%(k)
 #define vector(p) struct Vector (*p)=(struct Vector *)malloc(sizeof(struct Vector));\
@@ -73,6 +72,8 @@ char **data_sentence;
 char **data_paragraph;
 char **data_option;
 
+int speed=100000;
+
 int main(void) {
     // CONVERT DATA FILE to ARRAY
     char *files[] = { 
@@ -115,9 +116,10 @@ int main(void) {
 
     // INIT NCURSES
     initscr();
+    refresh();
     cbreak();
-    nodelay(stdscr, true);
     noecho();
+    nodelay(stdscr, true);
     scrollok(stdscr, true);
     /* curs_set(FALSE); */
 
@@ -209,13 +211,12 @@ int main(void) {
                     rk_sema_init(&s, 1);
                     pthread_attr_init(&attr);
                     pthread_create(&tids[0], &attr, bar, n_rand);
-                    usleep(1000000);
+                    usleep(speed);
 
                     for(int i=1; i<SIZE_N; i++) {
-                        pthread_attr_init(&attr);
                         // FUCTION CALL
                         pthread_create(&tids[i], &attr, rain, data_words[n_rand[i]]);
-                        usleep(1000000);
+                        usleep(speed*(31-count_up/3));
                         /* sleep(2); */
                     }
                     pthread_join(tids[0], NULL);
@@ -351,7 +352,7 @@ void *rain(void *wi) {
         /* sem_post(&mutex); */
         rk_sema_post(&s);
         /* sleep(1); */
-        usleep(300000);
+        usleep(speed*(6-count_up/20));
     }
     rk_sema_wait(&s);
     count_down++;

@@ -1,0 +1,6 @@
+./text/menu.txt
+./text/basic.txt
+./text/words.txt
+./text/sentence.txt
+./text/paragraph.txt
+./text/option.txt
