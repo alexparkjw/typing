@@ -149,7 +149,7 @@ typedef struct Class{
     items *KANAI_Jewelry;
 }class;
 
-char* strDup(const char* str);
+char * strDup(const char* str);
 int strCmp(void* vp1, void* vp2);
 void memCpy(void *dest, void *src, size_t size);
 
@@ -162,6 +162,8 @@ weapons * Set_Weapon(weapons *, int, int, double, int);
 class * Set_Weapon_eq(class *, weapons *);
 class * Set_Paragon(class *this, int par[4][4]);
 
+
+// item woring on it ----------
 items* Set_Item(items* this, int type, int op_pr, int op_se, int op_sp, int num, ...) {
     this = (items*) malloc(sizeof(items));
     this->Item_Parts = type;
@@ -202,45 +204,58 @@ class* Set_Item_eq(class *this, items *it) {
     return this;
 }
 
+// MAIN 
 int main(void) {
     setlocale(LC_NUMERIC, "");
-    //0:"Barbarian",1:"Crusader",2:"Demon_Hunter",3:"Monk",
-    //4:"Necromancer",5:"Witch_Doctor", 6:"Wizard" 
-    class *test = Set_Class(test, 4); 
 
-    //0:Head, 1:Shoulders, 2:Toros, 3Hands, 4Wrists, 5Waist, 6:Legs, 
-    //7:Feet, 8:Neck, 9:Finger1, 10:Finger2; 11:1Hand, 12:2Hand, 13:offHand;
+    // LIST of CLASSES
+    enum {Barbarian, Crusader, Demon_Hunter, Monk, Necromancer, Witch_Doctor, Wizard } choCLA; 
+    // CREATE CHARACTER & SET CLASS
+    class *myName = Set_Class(myName, Necromancer); 
+
+
+
+    // LIST ITEMS
+    enum {helms,shoulders,chest,bracers,gloves,belt,pants,amulet,ring1,ring2,shields,oneHanded,Twohand,ranged } itemsEQ;
+    enum {axes1, ceremonialKnives, daggers, fistWeapons, maces1, mightyWeapons1, swords1 } oneHandedWeapons;
+    enum {axes2, dalbos, maces2, mightyWeapons2, spears, staves, swords2 } twoHandedWeapons;
+    enum {bow, crossbows, handCrossbows, wands } rangedWeapons;
+    // INVENTROY
     weapons* nothing_but_punch = Set_Weapon(nothing_but_punch, 2, 3, 1.0, 11);
     weapons* initiates_hand_crossbow = Set_Weapon(initiates_hand_crossbow, 2, 3, 1.20, 11);
     weapons* short_bow = Set_Weapon(short_bow, 1, 8, 1.40, 12);
 
     weapons* base_nat = Set_Weapon(base_nat, 2, 3, 1.20, 11);
 
-    /* test = Set_Weapon_eq(test, nothing_but_punch); */
-    /* test = Set_Weapon_eq(test, initiates_hand_crossbow); */
-    /* test = Set_Weapon_eq(test, short_bow); */
-    test = Set_Weapon_eq(test, base_nat);
+
+    // EQ
+    /* myName = Set_Weapon_eq(myName, nothing_but_punch); */
+    /* myName = Set_Weapon_eq(myName, initiates_hand_crossbow); */
+    /* myName = Set_Weapon_eq(myName, short_bow); */
+    myName = Set_Weapon_eq(myName, base_nat);
+
 
     // Option_Index ;
     /* items* head = Set_Item(head, 0, 1, 1, 0, 4, 1, 1.0, 2, 1.0); */
-    /* test = Set_Item_eq(test, head); */
+    /* myName = Set_Item_eq(myName, head); */
 
     int paragon[4][4] = { 
         {100, 100, 50, 50}, // Aviltiy, Vitality, Movemnet, Resource
         {50, 50, 50, 50},   // Attack Speed, Cool Down, Critical Rate, Critical Damage
-        {50, 0, 50, 0},     // VR, Armor, Resist, LR
-        {50, 50, 50, 50}    // G
+        {50, 50, 50, 50},   // Life%, Armor%, Resist%, Life per Sec
+        {50, 50, 50, 50}    // Area Damage, Resouce Down, Life per Hit, Gold%
     };
-    test = Set_Paragon(test, paragon);
+    myName = Set_Paragon(myName, paragon);
 
 
-    // test
+    // level up testing 
     for(int i=0; i<1; i++) {
-        printf("========================\n");
+        /* printf("===========%d=============\n", i+1); */
         // for Level Up
-        test = Set_Level(test, i+1);
-        test = refresh(test);
-        Details(test); // print out 
+        myName = Set_Level(myName, i+1);
+        myName = refresh(myName);
+        // print out detail inform. 
+        Details(myName);  
     }
 
     return 0;
@@ -306,6 +321,11 @@ class* Set_Class(class *this, int p){
     for(int i=0; i<13; i++) 
         this->Armor_by_Items[i] = 0;
 
+    this->Life_per_Second = 0; 
+    this->Life_per_Hit = 0;
+
+    this->Total_Life_Bonus = 0;
+    this->Movement_Speed = 0;
     return this;
 }
 
@@ -396,35 +416,6 @@ class* refresh(class *this) {
     this->Intelligence += (this->Level-1)*level[this->Class][2];
     this->Vitality += (this->Level-1)*level[this->Class][3];
 
-    this->Maximum_Life = (40 + this->Vitality*10 + 4*(this->Level-1))
-        *(1 + (double)this->P[2][0]/200.0);
-    switch(this->Class) {
-        case(0):
-            this->Maximum_Fury = 100 + this->P[0][3];
-            break;
-        case(1):
-            this->Maximum_Wrath = 100 + this->P[0][3];
-            break;
-        case(2):
-            this->Maximum_Hated = 125 + this->P[0][3];
-            this->Maximum_Discipline = 30 + this->P[0][3];
-            break;
-        case(3):
-            this->Maximum_Spirit = 100 + this->P[0][3];
-            break;
-        case(4):
-            this->Maximum_Essence = 200 + this->P[0][3];
-            break;
-        case(5):
-            this->Maximum_Mana = 100 + this->P[0][3];
-            break;
-        case(6):
-            this->Maximum_Arcane_Power = 100 + this->P[0][3];
-            break;
-        default:
-            printf("nothing\n");
-    }
-
 
     switch(this->Class) 
     {
@@ -481,7 +472,7 @@ class* refresh(class *this) {
     this->Armor_by_Dex = this->Dexterity;
     this->Armor = this->Armor_by_Str + this->Armor_by_Dex;
     for(int i=0; i<13; i++) this->Armor += this->Armor_by_Items[i];
-    this->Armor = this->Armor*(1+(double)this->P[1][1]/200.0);
+    this->Armor = this->Armor*(1+(double)this->P[2][1]/200.0);
 
     //--------- floorf(), roundf(), ceilf() ------------------
     int enermyLevel = this->Level;
@@ -501,13 +492,57 @@ class* refresh(class *this) {
         (1/(1-this->Pysical_Reduction));
 
     this->Toughness = ceilf(this->Toughness);
-
     // DP 
     this->DP = 1 - ( 1 - this->Damage_Reduction) * ( 1 - this->Pysical_Reduction);
 
-    // not doging yet
+
+    // LIFE  
+    this->Total_Life_Bonus += (double)this->P[2][0]/200.0;
+    this->Maximum_Life = (40 + this->Vitality*10 + 4*(this->Level-1))
+        *(1 + this->Total_Life_Bonus);
+
+    double lps = 0.156;
+    double lph = 0.11696666;
+
+    this->Life_per_Second += roundf(lps*this->P[2][3]*100)/100; 
+    this->Life_per_Hit += roundf(lph*this->P[3][3]*100)/100;
+
+    /* this->Life_per_kill; */
+    /* this->Health_Globe_Healing_Bouns; */
+
+    // working on int ----------- A + B 
     this->Recovery = 0;
 
+    // RESOURCES 
+    switch(this->Class) {
+        case(0):
+            this->Maximum_Fury = 100 + this->P[0][3];
+            break;
+        case(1):
+            this->Maximum_Wrath = 100 + this->P[0][3];
+            break;
+        case(2):
+            this->Maximum_Hated = 125 + this->P[0][3];
+            this->Maximum_Discipline = 30 + this->P[0][3];
+            break;
+        case(3):
+            this->Maximum_Spirit = 100 + this->P[0][3];
+            break;
+        case(4):
+            this->Maximum_Essence = 200 + this->P[0][3];
+            break;
+        case(5):
+            this->Maximum_Mana = 100 + this->P[0][3];
+            break;
+        case(6):
+            this->Maximum_Arcane_Power = 100 + this->P[0][3];
+            break;
+        default:
+            printf("nothing\n");
+    }
+
+    // ADVANTURE
+    this->Movement_Speed += (this->P[0][2]/200);    
     return this;
 }
 
@@ -517,20 +552,68 @@ void Details(class *this) {
         "Necromancer", "Witch_Doctor", "Wizard" 
     };
 
-    printf("Class: %17s\n", class[this->Class]);
-    printf("level:        %10d\n", this->Level);
-    printf("Paragon:      %10d\n\n", this->Paragon);
-    printf("Strength:     %10d\n", this->Strength);
-    printf("Dexterity:    %10d\n", this->Dexterity);
-    printf("Intelligence: %10d\n", this->Intelligence);
-    printf("Vitality:     %10d\n\n", this->Vitality);
-    //#1 3.38, 205, 0 //#2 3.47, 205, 0 //#3 3.57, 223, 0
-    printf("Damage:       %10.2f\n", this->Damage);
-    printf("Toughness:    %10'd\n", (int)this->Toughness);
-    printf("Recovery:     %10.0f\n\n", round(this->Recovery) );
+    printf("Class:   %17s\n", class[this->Class]);
+    printf("==========================\n");
+    printf("level:          %10d\n", this->Level);
+    printf("Paragon:        %10d\n", this->Paragon);
+    printf("--------------------------\n");
+    printf("Strength:       %10d\n", this->Strength);
+    printf("Dexterity:      %10d\n", this->Dexterity);
+    printf("Intelligence:   %10d\n", this->Intelligence);
+    printf("Vitality:       %10d\n", this->Vitality);
+    printf("--------------------------\n");
+    printf("Damage:         %10.2f\n", this->Damage);
+    printf("Toughness:      %10'd\n", (int)this->Toughness);
+    printf("Recovery:       %10.0f\n\n", round(this->Recovery) );
 
-    //#1 130, 125, 30 //#2 154, 125, 30 //#3 178, 125, 30
-    printf("Life:         %10d\n", this->Maximum_Life);
+    // OFFENCE
+    printf("OFFENCE\n");
+    printf("==========================\n");
+    printf("1\n");
+    printf("2\n");
+    printf("3\n");
+    printf("4\n");
+    printf("5\n");
+    printf("6\n");
+    printf("7\n");
+    printf("8\n");
+    printf("9\n\n");
+       
+    // DEFFENCE
+    printf("DEFENCE\n");
+    printf("==========================\n");
+    printf("\n");
+    printf("Armor:          %10.0f\n", this->Armor );
+    /* printf("(%.2f%%)\n", this->Damage_Reduction*100 ); */
+    printf("Damage Reduction: (%4.2f%%)\n", this->Damage_Reduction*100 );
+    printf("Pysical Resistance:   %4.0f\n", this->Pysical_Resistance );
+    /* printf("(%.2f%%)\n", this->Pysical_Reduction*100 ); */
+    printf("Pysical Reduction:(%4.2f%%)\n", this->Pysical_Reduction*100 );
+    printf("A\n"); 
+    printf("A\n"); 
+    printf("A\n"); 
+    printf("A\n"); 
+    printf("A\n"); 
+    printf("B\n"); 
+    printf("B\n"); 
+    printf("B\n"); 
+    printf("B\n"); 
+    printf("DP: %4.2f%%\n\n", this->DP*100 );
+    
+    // LIFE
+    printf("LIFE\n");
+    printf("========================\n");
+    printf("Maximun Life: %10d\n", this->Maximum_Life);
+    printf("Life +%:      %10.2f%%\n", this->Total_Life_Bonus);
+    printf("Life Second : %10.2f\n", this->Life_per_Second);
+    printf("Life/Hit:     %10.2f\n", this->Life_per_Hit);
+    printf("A\n");
+    printf("A\n");
+    printf("A\n\n");
+
+    // RESOURCE
+    printf("RESOURCE\n");
+    printf("========================\n");
     switch(this->Class) {
         case 0:
             printf("Fury:      %10d\n", this->Maximum_Fury);
@@ -557,16 +640,23 @@ void Details(class *this) {
         default:
             break;
     }
-    //
-    printf("\n");
-    printf("Armor:        %10.0f", this->Armor );
-    printf("(%.2f%%)\n", this->Damage_Reduction*100 );
-    /* printf("Damage Reduction:   %7.2f%%\n", this->Damage_Reduction*100 ); */
-    printf("Pysical Resistance: %4.0f", this->Pysical_Resistance );
-    printf("(%.2f%%)\n\n", this->Pysical_Reduction*100 );
-    /* printf("Pysical Reduction:  %7.2f%%\n\n", this->Pysical_Reduction*100 ); */
-    printf("DP:     %7.2f%%\n", this->DP*100 );
-    printf("\n");
+    printf("A\n"); 
+    printf("A\n\n"); 
+
+    printf("ADVANTURE\n");
+    printf("========================\n");
+    printf("A\n"); 
+    printf("A\n"); 
+    printf("A\n"); 
+    printf("A\n"); 
+    printf("A\n"); 
+    printf("\n\n");
+
+    printf("KANAI\n");
+    printf("========================\n");
+    printf("A\n"); 
+    printf("A\n"); 
+    printf("A\n\n"); 
 }
 
 char * strDup(const char *str){
@@ -588,5 +678,11 @@ void memCpy(void *dest, void *src, size_t size) {
     for (int i=0; i<size; i++) 
         c_dest[i] = c_src[i]; 
 } 
+
+
+
+
+
+
 
 

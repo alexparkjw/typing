@@ -24,7 +24,7 @@ typedef struct class {
     } index;
     void (*set)(int);
     void (*detail)();
-}class;
+}class; *this=NULL;
 
 void set(int index );
 void detail();
@@ -36,7 +36,7 @@ void detail();
 #define CONCAT2(a, b) CONCAT(a, b)
 #define CLASS(...) CONCAT2(CLASS_, COUNT_ARGUMENTS(__VA_ARGS__))(FORMAT, ##__VA_ARGS__)
 
-#define CLASS_0(FORMAT) class *this=NULL
+#define CLASS_0(FORMAT) class *this=NULL, *curr=NULL;
 #define CLASS_1(FORMAT, ARG1)  class (ARG1); this=&(ARG1); this->set=set; this->detail=detail
 #define CLASS_2(FORMAT, ARG1, ARG2) class ARG1[ARG2]; \
     for(int i=0; i<ARG2; i++) { this = &ARG1[i]; this->set=set; this->detail=detail; } 
@@ -54,13 +54,20 @@ int main(void) {
     int len = len_func(fp);
     fclose(fp);
 
-    CLASS(arrFruit, len);
-    for(int i=0; i<len; i++)  {
-        arrFruit[i].set(i);
-        arrFruit[i].detail();
-    }
+    CLASS(a);
+    CLASS(b);
+    CLASS(c);
 
-    arrFruit[Orange].detail();
+    a.set(Apple);
+    b.set(Banana);
+    c.set(Cherry);
+
+    this = &a;
+    a.detail();
+    this = &b;
+    b.detail();
+    this = &c;
+    c.detail();
 
     return 0;
 }
