@@ -1,7 +1,7 @@
 //
 //  macro.c
 //  typing program
-//
+//  version 1.00
 //  Created by Alex on 01/01/2020.
 //  Copyright © 2020 Alex. All rights reserved.
 //
@@ -80,8 +80,6 @@ int main(void) {
         "./text/menu.txt", "./text/basic.txt", "./text/words.txt", 
         "./text/sentence.txt", "./text/paragraph.txt", "./text/option.txt" 
     };
-
-    char **data[] = { data_menu, data_basic, data_words, data_sentence, data_paragraph, data_option };
 
     int lens[6];
     FILE *fp[6];
