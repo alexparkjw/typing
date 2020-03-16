@@ -19,7 +19,7 @@ typedef struct Vector {
 }vector;
 
 
-#define WIDTH 90
+#define WIDTH 120
 #define HEIGHT 45
 #define SIZE_N 101
 #define endl printf("\n")
@@ -129,12 +129,12 @@ int main(void) {
     vector(sentence);
     vector(paragraph);
     vector(option);
-    menu->set(menu, 4, 4, (HEIGHT-HEIGHT/4)/2, (WIDTH-WIDTH/4)/2, lens[0], data_menu);
-    menu->set( basic, 4, 2, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/2)/2, lens[1], data_basic);
-    words->set( words, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, lens[2], data_words);
-    sentence->set( sentence, 6, 1, (HEIGHT - HEIGHT/6)/2, (WIDTH - WIDTH/1)/2, lens[3], data_sentence);
-    paragraph->set( paragraph, 2, 1, (HEIGHT - HEIGHT/2)/2, (WIDTH - WIDTH/1)/2, lens[4], data_paragraph);
-    option->set(option, 4, 4, (HEIGHT - HEIGHT/4)/2, (WIDTH - WIDTH/4)/2, lens[5], data_option);
+    menu->set(menu, 4, 4, (HEIGHT-HEIGHT/4)/8, (WIDTH-WIDTH/4)/2, lens[0], data_menu);
+    menu->set( basic, 4, 2, (HEIGHT - HEIGHT/4)/8, (WIDTH - WIDTH/2)/2, lens[1], data_basic);
+    words->set( words, 6, 1, (HEIGHT - HEIGHT/6)/8, (WIDTH - WIDTH/1)/2, lens[2], data_words);
+    sentence->set( sentence, 6, 1, (HEIGHT - HEIGHT/6)/8, (WIDTH - WIDTH/1)/2, lens[3], data_sentence);
+    paragraph->set( paragraph, 2, 1, (HEIGHT - HEIGHT/2)/8, (WIDTH - WIDTH/1)/2, lens[4], data_paragraph);
+    option->set(option, 4, 4, (HEIGHT - HEIGHT/4)/8, (WIDTH - WIDTH/4)/2, lens[5], data_option);
 
     int *op[]= { &basic->o, &words->o, &sentence->o, &paragraph->o};
     load_option("option.conf", op);
@@ -256,8 +256,8 @@ void *bar(void *n) {
     int *index_data = (int*)n;
     int i=0, x=2, y=2, ch=0;
     char temp[100];
-    WINDOW *type=newwin(5, 20, (HEIGHT- 6), (WIDTH)/2-10);
-    WINDOW *life=newwin(3, 10, (HEIGHT- 6), (WIDTH)/2-20);
+    WINDOW *type=newwin(5, 20, (HEIGHT- 8), (WIDTH)/2-10);
+    WINDOW *life=newwin(3, 10, (HEIGHT- 8), (WIDTH)/2-20);
 
     while(SIZE_N - count_up - count_down > 1 ) {
         /* curs_set(TRUE); */
