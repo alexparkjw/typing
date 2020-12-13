@@ -9,12 +9,12 @@
 #ifndef header_h
 #define header_h
 
-#include <semaphore.h>
+/* #include <semaphore.h> */
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/syscall.h>
 #include <pthread.h>
-#include <curses.h>
+#include <ncurses.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>

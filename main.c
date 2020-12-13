@@ -3,7 +3,7 @@
 //  typing program
 //  version 1.00
 //  Created by Alex on 01/01/2020.
-//  Copyright © 2020 Alex. All rights reserved.
+//  Copyright © 2020 RX Alex. All rights reserved.
 //
 
 #include "header.h"
@@ -17,7 +17,6 @@ typedef struct Vector {
     void (*set)(struct Vector*, int, int, int, int, int, char**);
     void (*put)(struct Vector*);
 }vector;
-
 
 #define WIDTH 120
 #define HEIGHT 45
@@ -89,7 +88,7 @@ int main(void) {
             printf("the file: %s can not be opend!\n", files[i]);
             exit(1);
         }
-        lens[i] = len_func(fp[i]);
+        lens[i] = len_func(fp[i]); /* lens[i] = lseek(fp[i], 0, SEEK_END); */
         // ---------------------------------------------
         /* data[i] = save_func(fp[i], lens[i]);  // 아래 6개를 이부분으로 대체하면 에러 */
         // ---------------------------------------------
@@ -408,7 +407,7 @@ int strCmp(void * vp1, void * vp2) {
     char * s2 = (char *)vp2;
     return strcmp(s1, s2);
 }
-
+// same as lseek(fp, 0, SEEK_END);
 int len_func(FILE *fp) {
     fseek(fp, 0, SEEK_SET); /* rewind(fp) */
     int len = 0;
