@@ -6,8 +6,8 @@
 //  Copyright © 2020 RX Alex. All rights reserved.
 //
 
-#include "header.h"
-#include "sem.h"
+#include "include/Header.h"
+#include "include/sem.h"
 #include <ncurses.h>
 
 typedef struct Vector {

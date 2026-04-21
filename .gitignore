@@ -1,0 +1,4 @@
+main
+main.out
+*.dSYM/
+option.conf
