@@ -169,3 +169,154 @@ git clone https://github.com/alexparkjw/typing.git
 ```
 리눅스,맥 기반읜 한메타자 같은 프로그램을 GitHub 를 활용하여 프로젝트 해볼까 한다.
 
+
+
+# 6. SSH 키 설정 (HTTPS 대신 SSH 인증)
+
+GitHub 에 push 할 때 매번 아이디/패스워드를 입력하지 않으려면 SSH 키를 등록한다.
+
+```
+ssh-keygen -t ed25519 -C "이메일@example.com"
+```
+- `~/.ssh/id_ed25519` (개인키) 와 `~/.ssh/id_ed25519.pub` (공개키) 가 생성된다.
+
+```
+cat ~/.ssh/id_ed25519.pub
+```
+- 출력된 내용을 복사한다.
+- GitHub → Settings → SSH and GPG keys → New SSH key 에 붙여넣기 한다.
+
+```
+ssh -T git@github.com
+```
+- `Hi 아이디! You've successfully authenticated` 메시지가 나오면 성공.
+
+원격 주소를 HTTPS 에서 SSH 로 바꾸기:
+```
+git remote set-url origin git@github.com:아이디/리파지토리.git
+```
+
+
+
+# 7. 브랜치(Branch) 활용
+
+브랜치는 원본(main/master) 을 건드리지 않고 독립적으로 작업할 수 있는 공간이다.
+기능 추가나 버그 수정을 브랜치에서 하고, 완성되면 main 에 병합하는 방식이 일반적이다.
+
+```
+git branch
+```
+- 현재 브랜치 목록 확인. `*` 표시가 현재 위치.
+
+```
+git checkout -b 브랜치명
+```
+- 새 브랜치를 만들고 바로 이동.
+
+```
+git checkout main
+git merge 브랜치명
+```
+- main 으로 이동 후 작업한 브랜치를 병합.
+
+```
+git branch -d 브랜치명
+```
+- 병합 완료된 브랜치 삭제.
+
+```
+git push origin 브랜치명
+```
+- 브랜치를 GitHub 에 올리기. (pull request 생성 가능)
+
+
+
+# 8. 실수했을 때 되돌리기
+
+```
+git restore --staged 파일명
+```
+- `git add` 한 것을 취소. 파일 내용은 그대로 유지.
+
+```
+git restore 파일명
+```
+- 파일을 마지막 커밋 상태로 되돌리기. **주의: 수정 내용이 사라진다.**
+
+```
+git commit --amend -m "수정된 메시지"
+```
+- 가장 최근 커밋 메시지 수정. push 하기 전에만 사용할 것.
+
+```
+git revert 커밋해시
+```
+- 특정 커밋을 취소하는 새 커밋을 만든다. 이력이 보존된다.
+
+```
+git log --oneline
+```
+- 커밋 해시와 메시지를 한 줄로 확인. 해시 앞 7자리만 써도 된다.
+
+
+
+# 9. 협업할 때 기본 흐름
+
+여러 명이 같은 레포에서 작업할 때 충돌을 줄이는 순서:
+
+```
+git pull origin main        # 작업 전 최신 내용 가져오기
+git checkout -b 기능명      # 새 브랜치에서 작업
+git add .
+git commit -m "설명"
+git push origin 기능명      # GitHub 에 올리기
+                            # → GitHub 에서 Pull Request 생성
+                            # → 리뷰 후 main 에 merge
+```
+
+- `git pull` 을 자주 해서 최신 상태를 유지하면 충돌(conflict) 을 줄일 수 있다.
+- 충돌이 생기면 해당 파일을 열어 `<<<<<<<`, `=======`, `>>>>>>>` 표시 부분을 직접 수정 후 다시 커밋하면 된다.
+
+
+
+# 10. .gitignore
+
+커밋하고 싶지 않은 파일은 `.gitignore` 파일에 등록한다.
+빌드 결과물, 환경 설정 파일, 개인 정보 등이 해당된다.
+
+```
+# 예시 .gitignore
+
+*.out           # 컴파일 결과물
+*.o             # 오브젝트 파일
+.DS_Store       # macOS 시스템 파일
+option.conf     # 개인 설정 파일
+.env            # 환경 변수 (비밀번호 등)
+.build/         # Swift 빌드 디렉토리
+```
+
+이미 커밋된 파일은 `.gitignore` 에 추가해도 추적이 계속된다. 아래 명령어로 제거:
+```
+git rm --cached 파일명
+```
+
+
+
+# 11. 자주 쓰는 명령어 한눈에 보기
+
+| 명령어 | 설명 |
+|--------|------|
+| `git status` | 현재 상태 확인 |
+| `git diff` | 변경 내용 상세 확인 |
+| `git add .` | 전체 파일 스테이징 |
+| `git commit -m "msg"` | 커밋 |
+| `git push origin main` | GitHub 에 올리기 |
+| `git pull origin main` | GitHub 에서 가져오기 |
+| `git log --oneline` | 커밋 이력 간략히 보기 |
+| `git clone URL` | 레포 복사 |
+| `git checkout -b 브랜치` | 새 브랜치 만들고 이동 |
+| `git merge 브랜치` | 브랜치 병합 |
+| `git stash` | 작업 중인 내용 임시 저장 |
+| `git stash pop` | 임시 저장 내용 복원 |
+
+공식 문서 한글판: https://git-scm.com/book/ko/v2
