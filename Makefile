@@ -23,9 +23,14 @@ OpenGL = -I$(BREW_PREFIX)/include \
 
 RM = rm -f
 
+.PHONY: all run clean
+
 all: $(TARGETS)
 
-$(TARGETS):
+run: $(TARGETS)
+	./$(TARGETS)
+
+$(TARGETS): %: %.c include/Header.h include/sem.h
 	$(CC) $@.c -o $@ $(INCLUDES) $(CFLAGS) $(LDFLAGS)
 
 clean:

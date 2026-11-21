@@ -1,6 +1,5 @@
-1. Set basic 
+1. Set basic
 2. Set words
 3. Set sentence
 4. Set paragraph
-4. Set game
 5. Exit Option

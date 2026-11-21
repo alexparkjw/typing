@@ -20,6 +20,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <assert.h>
 
 #endif /* header_h */

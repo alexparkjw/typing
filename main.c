@@ -1,5 +1,5 @@
 //
-//  macro.c
+//  main.c
 //  typing program
 //  version 1.00
 //  Created by Alex on 01/01/2020.
@@ -56,6 +56,8 @@ void save_option(char *filename, int **op);
 /* pthread_mutex_t mutex; */
 struct rk_sema s;
 pthread_t tids[SIZE_N];
+volatile int alive[SIZE_N];   // 1 = 단어가 아직 떨어지는 중
+int *word_idx;                // rain 스레드 i 의 단어 = data_words[word_idx[i]]
 pthread_attr_t attr;
 /* pthread_cancel(tids[i]); */
 
@@ -129,7 +131,7 @@ int main(void) {
     vector(paragraph);
     vector(option);
     menu->set(menu, 4, 4, (HEIGHT-HEIGHT/4)/8, (WIDTH-WIDTH/4)/2, lens[0], data_menu);
-    menu->set( basic, 4, 2, (HEIGHT - HEIGHT/4)/8, (WIDTH - WIDTH/2)/2, lens[1], data_basic);
+    basic->set( basic, 4, 2, (HEIGHT - HEIGHT/4)/8, (WIDTH - WIDTH/2)/2, lens[1], data_basic);
     words->set( words, 6, 1, (HEIGHT - HEIGHT/6)/8, (WIDTH - WIDTH/1)/2, lens[2], data_words);
     sentence->set( sentence, 6, 1, (HEIGHT - HEIGHT/6)/8, (WIDTH - WIDTH/1)/2, lens[3], data_sentence);
     paragraph->set( paragraph, 2, 1, (HEIGHT - HEIGHT/2)/8, (WIDTH - WIDTH/1)/2, lens[4], data_paragraph);
@@ -205,14 +207,21 @@ int main(void) {
                     // INIT PTHREAD 
                     /* sem_open((char*)&mutex, 0, 1); */
                     /* sem_init(&mutex, 0, 1); */
+                    count_up = 0;
+                    count_down = 0;
+                    for(int i=1; i<SIZE_N; i++) {
+                        n_rand[i] = rr(lens[2]);
+                        alive[i] = 0;
+                    }
+                    word_idx = n_rand;
                     rk_sema_init(&s, 1);
                     pthread_attr_init(&attr);
                     pthread_create(&tids[0], &attr, bar, n_rand);
                     usleep(speed);
 
                     for(int i=1; i<SIZE_N; i++) {
-                        // FUCTION CALL
-                        pthread_create(&tids[i], &attr, rain, data_words[n_rand[i]]);
+                        alive[i] = 1;
+                        pthread_create(&tids[i], &attr, rain, (void*)(intptr_t)i);
                         usleep(speed*(31-count_up/3));
                         /* sleep(2); */
                     }
@@ -266,6 +275,7 @@ void *bar(void *n) {
             switch (ch)
             {
                 case 127: case 8: case KEY_BACKSPACE:
+                    if(i == 0) break;
                     rk_sema_wait(&s);
                     mvwprintw(type, y, --x, " \b");
                     wrefresh(type);
@@ -283,6 +293,7 @@ void *bar(void *n) {
                     i=0;
                     break;
                 default:
+                    if(i >= (int)sizeof(temp) - 1 || ch < 32 || ch > 126) break;
                     temp[i]=ch;
                     rk_sema_wait(&s);
                     mvwprintw(type, y, x++, "%c", temp[i]);
@@ -309,13 +320,11 @@ void *bar(void *n) {
             if(ch==10 || ch==' ') {
                 /* curs_set(FALSE); */
                 for(int i=1; i<index_data[0]; i++) {
-                    if(strcmp(temp, data_words[index_data[i]])==0 && tids[i] != NULL) {
-                        count_up++;
+                    if(alive[i] && strcmp(temp, data_words[index_data[i]])==0) {
                         rk_sema_wait(&s);
-                        erase();
-                        refresh();
+                        alive[i] = 0;        // rain 스레드가 다음 칸에서 스스로 종료
+                        count_up++;
                         rk_sema_post(&s);
-                        pthread_cancel(tids[i]);
                     }
                 }
             }
@@ -331,8 +340,9 @@ void *bar(void *n) {
     pthread_exit(0);
 }
 
-void *rain(void *wi) {
-    char *ldata = (char*)wi;
+void *rain(void *n) {
+    int me = (int)(intptr_t)n;         // 몇 번째 단어인지 (1..SIZE_N-1)
+    char *ldata = data_words[word_idx[me]];
     int len = strlen(ldata);
     int h=3, w=len+2, y=1, x=rr(WIDTH-len-2); 
 
@@ -342,6 +352,11 @@ void *rain(void *wi) {
         rk_sema_wait(&s);
         werase(block);
         wrefresh(block);
+        delwin(block);
+        if(!alive[me]) {          // 맞춘 단어 → 지우고 끝
+            rk_sema_post(&s);
+            pthread_exit(0);
+        }
         block=newwin(h,w,y++,x);
         mvwprintw(block, 1, 1, "%s", ldata);
         box(block, 0, 0);
@@ -352,9 +367,11 @@ void *rain(void *wi) {
         usleep(speed*(6-count_up/20));
     }
     rk_sema_wait(&s);
-    count_down++;
+    if(alive[me]) count_down++;   // 바닥까지 떨어짐 = 목숨 -1
+    alive[me] = 0;
     werase(block);
     wrefresh(block);
+    delwin(block);
     rk_sema_post(&s);
     pthread_exit(0);
 }
@@ -706,13 +723,16 @@ int print_graph(vector *paragraph, int *l ) {
     char temp[5][150];
     int ch,i=0, y=2, x=2;
 
+    if(*l + 5 > paragraph->len) *l = 0;   // 파일 끝까지 갔으면 처음부터
+
     curs_set(TRUE); 
     box(paragraph->win, 0, 0);
     wrefresh(paragraph->win);
 
     for(int i=0; i<5; i++) {
-        if(paragraph->data[*l+i][strlen(paragraph->data[*l+i])-1] == ' ')
-            paragraph->data[*l+i][strlen(paragraph->data[*l+i])-1] = '\0';
+        size_t n = strlen(paragraph->data[*l+i]);
+        if(n > 0 && paragraph->data[*l+i][n-1] == ' ')
+            paragraph->data[*l+i][n-1] = '\0';
         mvwprintw(paragraph->win, i*4 + y, x, "%s", paragraph->data[*l+i]);
     }
     y++;
@@ -801,10 +821,11 @@ void option_menu(vector *option, int **num) {
                     ++highlight;
                 break;
             case '\n':
-                if( highlight >= 1 && highlight < 6) {
+                if( highlight >= 1 && highlight <= 4) {
                     werase(option->win);
                     wrefresh(option->win);
-                    *num[highlight-1] = set_option(option); 
+                    int v = set_option(option);
+                    if(v > 0) *num[highlight-1] = v;   // 빈 값/0/잘못된 값이면 그대로 유지
                     werase(option->win);
                     wrefresh(option->win);
                 }
@@ -825,7 +846,7 @@ void option_menu(vector *option, int **num) {
 }
 
 int set_option(vector *option) {
-    int ch, ret=10;
+    int ch, ret=-1;
     int i=0, y=2, x=2;
     char str[100];
 
@@ -842,11 +863,13 @@ int set_option(vector *option) {
                 i--;
                 break;
             default:
+                if(i >= (int)sizeof(str) - 1 || ch < '0' || ch > '9') break;
                 str[i]=ch;
                 mvwprintw(option->win, y, x++, "%c", str[i]);
                 i++;
         }
         if(i<0) i=0;
+        if(x<2) x=2;
     }
     str[i]='\0';
     if(str[0] != '\0') {
@@ -863,11 +886,13 @@ int set_option(vector *option) {
 void load_option(char *filename, int **op) {
     FILE *fp=fopen(filename, "r");
     if(fp == NULL) {
-        printf("%s file cannot open \n", filename);
+        // 없으면 기본값 (기초/단어/문장/문단 반복 횟수)
+        int def[4] = { 10, 10, 15, 5 };
+        for(int i=0; i<4; i++) *op[i] = def[i];
         return ;
     }
     for(int i=0; i<4; i++ )
-        fscanf(fp, " %d", op[i]);
+        if(fscanf(fp, " %d", op[i]) != 1 || *op[i] <= 0) *op[i] = 10;
 
     fclose(fp);
 }
